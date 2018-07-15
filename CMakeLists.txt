@@ -5,6 +5,7 @@ set(target_name convolutional)
 
 set(include
     include/BlasHelpers.h
+    include/ForLoopConvolution.h
     include/Tensor.h
 )
 
