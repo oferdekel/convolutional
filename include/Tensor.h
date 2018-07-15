@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Project:  Convolutions
+//  Project:  convolutional
 //  File:     Tensor.h
 //  Authors:  Ofer Dekel
 //
@@ -26,7 +26,7 @@ enum class TensorOrder
 };
 
 //
-// Tensor (3 dimensional matrix in either row-major or channel-major memory layout)
+// Tensor (3 dimensional matrix in either row-major or channel-major memory order)
 //
 template <typename ElementType>
 class Tensor
@@ -34,7 +34,7 @@ class Tensor
 public:
     // constructors
     Tensor() = default;
-    Tensor(size_t numRows, size_t numColumns, size_t numChannels, TensorOrder layout = TensorOrder::RowMajor);
+    Tensor(size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order = TensorOrder::RowMajor);
 
     // gets the number of rows, columns, channels
     size_t NumRows() const { return _numRows; }
@@ -53,7 +53,7 @@ public:
     bool operator==(const Tensor<ElementType>& other) const;
     bool operator!=(const Tensor<ElementType>& other) const;
 
-    // sets all tensor elements, other than padding, to a given value
+    // sets all tensor elements, other than the padding, to a given value
     void Fill(ElementType value, size_t verticalPadding = 0, size_t horizontalPadding=0);
 
     // runs a generator for each element in the tensor, other than the padding
@@ -74,25 +74,28 @@ protected:
     TensorOrder _order;
 };
 
-// Tensor is always streamed in the logical order (row major)
+// Streaming operator. Streams the tensor elements in logical order (row major)
 template <typename ElementType>
 std::ostream& operator<<(std::ostream& stream, const Tensor<ElementType>& tensor);
 
-//
-//
-//
+template <typename ElementType, typename RandomEngineType>
+Tensor<ElementType> GetRandomTensor(RandomEngineType& engine, size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order = TensorOrder::RowMajor, size_t verticalPadding = 0, size_t horizontalPadding=0);
 
-// define tolerance
-#define EPSILON 1.0e-5
+template <typename ElementType, typename RandomEngineType>
+std::vector<Tensor<ElementType>> GetRandomTensors(size_t numTensors, RandomEngineType& engine, size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order = TensorOrder::RowMajor, size_t verticalPadding = 0, size_t horizontalPadding=0);
+
+//
+//
+//
 
 template <typename ElementType>
-Tensor<ElementType>::Tensor(size_t numRows, size_t numColumns, size_t numChannels, TensorOrder layout)
+Tensor<ElementType>::Tensor(size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order)
     : _numRows(numRows), _numColumns(numColumns), _numChannels(numChannels),
-      _rowIncrement(layout == TensorOrder::RowMajor ? _numColumns * _numChannels : _numColumns),
-      _columnIncrement(layout == TensorOrder::RowMajor ? _numChannels : 1),
-      _channelIncrement(layout == TensorOrder::RowMajor ? 1 : _numRows * _numColumns),
+      _rowIncrement(order == TensorOrder::RowMajor ? _numColumns * _numChannels : _numColumns),
+      _columnIncrement(order == TensorOrder::RowMajor ? _numChannels : 1),
+      _channelIncrement(order == TensorOrder::RowMajor ? 1 : _numRows * _numColumns),
       _data(numRows * numColumns * numChannels),
-      _order(layout)
+      _order(order)
 {}
 
 template <typename ElementType>
@@ -112,7 +115,8 @@ bool Tensor<ElementType>::operator==(const Tensor<ElementType>& other) const
 {
     auto elementComparer = [](ElementType a, ElementType b)
     {
-        return a - b < static_cast<ElementType>(EPSILON) && b - a < static_cast<ElementType>(EPSILON);
+        ElementType epsilon = 1.0e-5;
+        return (a - b < epsilon) && (b - a < epsilon);
     };
 
     if (_numRows != other.NumRows() || _numColumns != other.NumColumns() || _numChannels != other.NumChannels())
@@ -143,16 +147,16 @@ bool Tensor<ElementType>::operator!=(const Tensor<ElementType>& other) const
 template <typename ElementType>
 void Tensor<ElementType>::Fill(ElementType value, size_t verticalPadding, size_t horizontalPadding)
 {
-    Generate([&](){ return value; })
+    Generate([&](){ return value; }, verticalPadding, horizontalPadding);
 }
 
 template <typename ElementType>
 template <typename GeneratorType>
 void Tensor<ElementType>::Generate(GeneratorType generator, size_t verticalPadding, size_t horizontalPadding)
 {
-    for (size_t i = verticalPadding; i < _numRows - verticalPadding; ++i)
+    for (size_t i = verticalPadding; i + verticalPadding < _numRows; ++i)
     {
-        for (size_t j = horizontalPadding; j < _numColumns - horizontalPadding; ++j)
+        for (size_t j = horizontalPadding; j + horizontalPadding < _numColumns; ++j)
         {
             for (size_t k = 0; k < _numChannels; ++k)
             {
@@ -215,3 +219,27 @@ std::ostream& operator<<(std::ostream& stream, const Tensor<ElementType>& tensor
     return stream;
 }
 
+template <typename ElementType, typename RandomEngineType>
+Tensor<ElementType> GetRandomTensor(RandomEngineType& engine, size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order, size_t verticalPadding, size_t horizontalPadding)
+{
+    // create standard normal random number generator
+    std::normal_distribution<ElementType> normal(0, 1);
+    auto rng = [&](){ return normal(engine);};
+
+    Tensor<ElementType> T(numRows, numColumns, numChannels, order);
+    T.Generate(rng, verticalPadding, horizontalPadding);
+
+    return T;
+}
+
+template <typename ElementType, typename RandomEngineType>
+std::vector<Tensor<ElementType>> GetRandomTensors(size_t numTensors, RandomEngineType& engine, size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order, size_t verticalPadding, size_t horizontalPadding)
+{
+    std::vector<Tensor<ElementType>> tensors;
+    for(int i=0; i<numTensors; ++i)
+    {
+        tensors.push_back(GetRandomTensor<ElementType>(engine, numRows, numColumns, numChannels, order, verticalPadding, horizontalPadding));
+    }
+
+    return tensors;
+}

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(ConvolutionReference)
-set(target_name convolution)
+project(convolutional)
+set(target_name convolutional)
 
 set(include
     include/BlasHelpers.h
