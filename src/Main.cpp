@@ -39,19 +39,30 @@ int main(int argc, char** argv)
     size_t numInputContentColumns = numInputColumns - 2 * horizontalInputPadding; // excludes any input padding
     size_t numInputContentChannels = numInputChannels;
 
-    // two random seeds
+    // random seeds and engine
     std::seed_seq seed1 = {103, 311, 1283};
     std::seed_seq seed2 = {3929, 437, 859};
+    std::default_random_engine engine;
 
     // generate the same random filters in both orders by repeating the same seed
-    auto WRowMajor = GetRandomTensors<float>(numFilters, std::default_random_engine(seed1), numFilterRows, numFilterColumns, numFilterChannels, TensorOrder::RowMajor);
-    auto WColumnMajor = GetRandomTensors<float>(numFilters, std::default_random_engine(seed1), numFilterRows, numFilterColumns, numFilterChannels, TensorOrder::ChannelMajor);
+    engine.seed(seed1);
+    auto WRowMajor = GetRandomTensors<float>(numFilters, engine, numFilterRows, numFilterColumns, numFilterChannels, TensorOrder::RowMajor);
+    
+    engine.seed(seed1);
+    auto WColumnMajor = GetRandomTensors<float>(numFilters, engine, numFilterRows, numFilterColumns, numFilterChannels, TensorOrder::ChannelMajor);
 
     // generate the same random input in both orders and with explicit/implicit padding
-    auto XRowMajorExplicit = GetRandomTensor<float>(std::default_random_engine(seed2), numInputRows, numInputColumns, numInputChannels, TensorOrder::RowMajor, verticalInputPadding, horizontalInputPadding);
-    auto XColumnMajorExplicit = GetRandomTensor<float>(std::default_random_engine(seed2), numInputRows, numInputColumns, numInputChannels, TensorOrder::ChannelMajor, verticalInputPadding, horizontalInputPadding);
-    auto XRowMajorImplicit = GetRandomTensor<float>(std::default_random_engine(seed2), numInputContentRows, numInputContentColumns, numInputContentChannels, TensorOrder::RowMajor);
-    auto XColumnMajorImplicit = GetRandomTensor<float>(std::default_random_engine(seed2), numInputContentRows, numInputContentColumns, numInputContentChannels, TensorOrder::ChannelMajor);
+    engine.seed(seed2);
+    auto XRowMajorExplicit = GetRandomTensor<float>(engine, numInputRows, numInputColumns, numInputChannels, TensorOrder::RowMajor, verticalInputPadding, horizontalInputPadding);
+
+    engine.seed(seed2);
+    auto XColumnMajorExplicit = GetRandomTensor<float>(engine, numInputRows, numInputColumns, numInputChannels, TensorOrder::ChannelMajor, verticalInputPadding, horizontalInputPadding);
+
+    engine.seed(seed2);
+    auto XRowMajorImplicit = GetRandomTensor<float>(engine, numInputContentRows, numInputContentColumns, numInputContentChannels, TensorOrder::RowMajor);
+
+    engine.seed(seed2);
+    auto XColumnMajorImplicit = GetRandomTensor<float>(engine, numInputContentRows, numInputContentColumns, numInputContentChannels, TensorOrder::ChannelMajor);
 
     return 0;
 }

@@ -63,15 +63,15 @@ class MatrixInterface : public MatrixConstInterface<ElementType>
 {
 public:
     // constructors
-    using MatrixConstInterface::MatrixConstInterface;
+    using MatrixConstInterface<ElementType>::MatrixConstInterface;
 
     // gets a reference to a matrix element
-    using MatrixConstInterface::operator();
+    using MatrixConstInterface<ElementType>::operator();
     ElementType& operator()(size_t rowIndex, size_t columnIndex);
 
     // Returns a pointer to the underlying contiguous data
-    using MatrixConstInterface::Data;
-    ElementType* Data() { return _pData; }
+    using MatrixConstInterface<ElementType>::Data;
+    ElementType* Data() { return this->_pData; }
 };
 
 // Matrix - implements the MatrixInterface without requiring external memory
@@ -132,19 +132,19 @@ std::ostream& operator<<(std::ostream& stream, const MatrixConstInterface<Elemen
 template <typename ElementType>
 ElementType& MatrixInterface<ElementType>::operator()(size_t rowIndex, size_t columnIndex)
 {
-    return _pData[rowIndex * _rowIncrement + columnIndex * _columnIncrement];
+    return this->_pData[rowIndex * this->_rowIncrement + columnIndex * this->_columnIncrement];
 }
 
 template <typename ElementType>
 Matrix<ElementType>::Matrix(size_t numRows, size_t numColumns, MatrixOrder order) :
-    MatrixInterface(nullptr, numRows, numColumns, order), _data(numRows * numColumns)
+    MatrixInterface<ElementType>(nullptr, numRows, numColumns, order), _data(numRows * numColumns)
 {
     this->_pData = _data.data();
 }
 
 template <typename ElementType>
 Matrix<ElementType>::Matrix(std::initializer_list<std::initializer_list<ElementType>> list, MatrixOrder order) :
-    MatrixInterface(nullptr, list.size(), list.begin()->size(), order), _data(list.size() * list.begin()->size())
+    MatrixInterface<ElementType>(nullptr, list.size(), list.begin()->size(), order), _data(list.size() * list.begin()->size())
 {
     this->_pData = _data.data();
 
