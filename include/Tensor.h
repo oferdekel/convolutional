@@ -15,103 +15,125 @@
 #include <memory>
 #include <random>
 #include <vector>
+#include <array>
+#include <string>
+
+template <size_t degree>
+using IntTuple = std::array<size_t, degree>;
+
+const IntTuple<3> RowMajor3TensorOrder = {2, 1, 0};
+const IntTuple<4> RowMajor4TensorOrder = {3, 2, 1, 0};
+const IntTuple<3> ChannelMajor3TensorOrder = {1, 0, 2};
 
 //
-// Tensor Order
+// Tensor (multi-dimensional array), stored in memory in arbitrary dimension order
 //
-enum class TensorOrder
-{
-    RowMajor = 0,
-    ChannelMajor
-};
-
-//
-// Tensor (3 dimensional matrix in either row-major or channel-major memory order)
-//
-template <typename ElementType>
+template <typename ElementType, size_t degree>
 class Tensor
 {
 public:
     // constructors
-    Tensor() = default;
-    Tensor(size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order = TensorOrder::RowMajor);
+    Tensor(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder);
 
-    // gets the number of rows, columns, channels
-    size_t NumRows() const { return _numRows; }
-    size_t NumColumns() const { return _numColumns; }
-    size_t NumChannels() const { return _numChannels; }
-    size_t Size() const { return _numRows * _numColumns * _numChannels; }
+    // gets the number of rows, columns, channels, ...
+    size_t Size(size_t dim) const { return _shape[dim]; }
 
-    // get the order of the tensor
-    TensorOrder Order() const { return _order; }
+    // gets the total size of the tensor
+    size_t Size() const;
 
-    // gets a reference to a matrix element
-    ElementType& operator()(size_t rowIndex, size_t columnIndex, size_t channelIndex);
-    const ElementType& operator()(size_t rowIndex, size_t columnIndex, size_t channelIndex) const;
+    // gets a reference to a tensor element
+    ElementType& operator()(IntTuple<degree> coordinate);
+    const ElementType& operator()(IntTuple<degree> coordinate) const;
 
     // equality operator
-    bool operator==(const Tensor<ElementType>& other) const;
-    bool operator!=(const Tensor<ElementType>& other) const;
+    bool operator==(const Tensor<ElementType, degree>& other) const;
+    bool operator!=(const Tensor<ElementType, degree>& other) const;
 
     // sets all tensor elements, other than the padding, to a given value
-    void Fill(ElementType value, size_t verticalPadding = 0, size_t horizontalPadding=0);
+    void Fill(ElementType value, IntTuple<degree> padding = {});
 
     // runs a generator for each element in the tensor, other than the padding
     template <typename GeneratorType>
-    void Generate(GeneratorType generator, size_t verticalPadding = 0, size_t horizontalPadding=0);
+    void Generate(GeneratorType generator, IntTuple<degree> padding = {});
 
     // Returns a subtensor
-    Tensor<ElementType> GetSubTensor(size_t firstRow, size_t firstColumns, size_t firstChannel, size_t numRows, size_t numColumns, size_t numChannels) const;
+    //Tensor<ElementType> GetSubTensor(IntTuple<degree> firstCoordinate, IntTuple<degree> shape) const;
 
     // Returns a pointer to the underlying contiguous data
     const ElementType* Data() const { return &_data[0]; }
     ElementType* Data() { return &_data[0]; }
 
+    // Prints the tensor to a stream
+    void Print(std::ostream& ostream) const;
+    void Print(std::ostream& ostream, size_t dimension, IntTuple<degree>& index) const;
+
 protected:
-    size_t _numRows, _numColumns, _numChannels;
-    size_t _rowIncrement, _columnIncrement, _channelIncrement;
+    IntTuple<degree> _shape;
+    IntTuple<degree> _increments;
     std::vector<ElementType> _data;
-    TensorOrder _order;
+
+    // increments the index
+    bool Next(IntTuple<degree>& index) const;
+    bool Next(IntTuple<degree>& index, IntTuple<degree> padding) const;
+
+    // checks if a tuple is a permutation of 0, 1, 2, ...
+    static bool IsOrder(IntTuple<degree> order);
+
+    // calculates the increments from the shape and the order of the dimensions
+    static IntTuple<degree> GetIncrements(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder);
 };
 
 // Streaming operator. Streams the tensor elements in logical order (row major)
-template <typename ElementType>
-std::ostream& operator<<(std::ostream& stream, const Tensor<ElementType>& tensor);
+template <typename ElementType, size_t degree>
+std::ostream& operator<<(std::ostream& stream, const Tensor<ElementType, degree>& tensor);
 
-template <typename ElementType, typename RandomEngineType>
-Tensor<ElementType> GetRandomTensor(RandomEngineType& engine, size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order = TensorOrder::RowMajor, size_t verticalPadding = 0, size_t horizontalPadding=0);
-
-template <typename ElementType, typename RandomEngineType>
-std::vector<Tensor<ElementType>> GetRandomTensors(size_t numTensors, RandomEngineType& engine, size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order = TensorOrder::RowMajor, size_t verticalPadding = 0, size_t horizontalPadding=0);
+template <typename ElementType, size_t degree, typename RandomEngineType>
+Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder, IntTuple<degree> padding = {});
 
 //
 //
 //
 
-template <typename ElementType>
-Tensor<ElementType>::Tensor(size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order)
-    : _numRows(numRows), _numColumns(numColumns), _numChannels(numChannels),
-      _rowIncrement(order == TensorOrder::RowMajor ? _numColumns * _numChannels : _numColumns),
-      _columnIncrement(order == TensorOrder::RowMajor ? _numChannels : 1),
-      _channelIncrement(order == TensorOrder::RowMajor ? 1 : _numRows * _numColumns),
-      _data(numRows * numColumns * numChannels),
-      _order(order)
+template <typename ElementType, size_t degree>
+Tensor<ElementType, degree>::Tensor(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder) :
+    _shape(shape), _increments(GetIncrements(shape, minorToMajorOrder)), _data(Size())
 {}
 
-template <typename ElementType>
-ElementType& Tensor<ElementType>::operator()(size_t rowIndex, size_t columnIndex, size_t channelIndex)
+template <typename ElementType, size_t degree>
+size_t Tensor<ElementType, degree>::Size() const
 {
-    return _data[rowIndex * _rowIncrement + columnIndex * _columnIncrement + channelIndex * _channelIncrement];
+    size_t size = _shape[0];
+    for(size_t i = 1; i < degree; ++i)
+    {
+        size *= _shape[i];
+    }
+    return size;
 }
 
-template <typename ElementType>
-const ElementType& Tensor<ElementType>::operator()(size_t rowIndex, size_t columnIndex, size_t channelIndex) const
+template <typename ElementType, size_t degree>
+ElementType& Tensor<ElementType, degree>::operator()(IntTuple<degree> coordinate)
 {
-    return _data[rowIndex * _rowIncrement + columnIndex * _columnIncrement + channelIndex * _channelIncrement];
+    size_t index = 0;
+    for (size_t i = 0; i < degree; ++i)
+    {
+        index += coordinate[i] * _increments[i];
+    }
+    return _data[index];
 }
 
-template <typename ElementType>
-bool Tensor<ElementType>::operator==(const Tensor<ElementType>& other) const
+template <typename ElementType, size_t degree>
+const ElementType& Tensor<ElementType, degree>::operator()(IntTuple<degree> coordinate) const
+{
+    size_t index = 0;
+    for(size_t i = 0; i < degree; ++i)
+    {
+        index += coordinate[i] * _increments[i];
+    }
+    return _data[index];
+}
+
+template <typename ElementType, size_t degree>
+bool Tensor<ElementType, degree>::operator==(const Tensor<ElementType, degree>& other) const
 {
     auto elementComparer = [](ElementType a, ElementType b)
     {
@@ -119,127 +141,173 @@ bool Tensor<ElementType>::operator==(const Tensor<ElementType>& other) const
         return (a - b < epsilon) && (b - a < epsilon);
     };
 
-    if (_numRows != other.NumRows() || _numColumns != other.NumColumns() || _numChannels != other.NumChannels())
+    if (!std::equal(_shape.begin(), _shape.end(), other.Shape().begin))
     {
         return false;
     }
 
-    for (size_t i = 0; i < _numRows; ++i)
+    IntTuple<degree> index;
+    do
     {
-        for (size_t j = 0; j < _numColumns; ++j)
+        if ((*this)(index) != other(index))
         {
-            for (size_t k = 0; k < _numChannels; ++k)
-            {
-                if (!elementComparer((*this)(i, j, k), other(i, j, k))) return false;
-            }
+            return false;
         }
     }
+    while(Next(index));
 
     return true;
 }
 
-template <typename ElementType>
-bool Tensor<ElementType>::operator!=(const Tensor<ElementType>& other) const
+template <typename ElementType, size_t degree>
+bool Tensor<ElementType, degree>::operator!=(const Tensor<ElementType, degree>& other) const
 {
     return !(*this == other);
 }
 
-template <typename ElementType>
-void Tensor<ElementType>::Fill(ElementType value, size_t verticalPadding, size_t horizontalPadding)
+template <typename ElementType, size_t degree>
+void Tensor<ElementType, degree>::Fill(ElementType value, IntTuple<degree> padding)
 {
-    Generate([&](){ return value; }, verticalPadding, horizontalPadding);
+    Generate([&](){ return value; }, padding);
 }
 
-template <typename ElementType>
+template <typename ElementType, size_t degree>
 template <typename GeneratorType>
-void Tensor<ElementType>::Generate(GeneratorType generator, size_t verticalPadding, size_t horizontalPadding)
+void Tensor<ElementType, degree>::Generate(GeneratorType generator, IntTuple<degree> padding)
 {
-    for (size_t i = verticalPadding; i + verticalPadding < _numRows; ++i)
+    auto index = padding;
+    do
     {
-        for (size_t j = horizontalPadding; j + horizontalPadding < _numColumns; ++j)
+        (*this)(index) = generator();
+    }
+    while(Next(index, padding));
+}
+
+template <typename ElementType, size_t degree>
+void Tensor<ElementType, degree>::Print(std::ostream& stream) const
+{
+    IntTuple<degree> index = {};
+    Print(stream, 0, index);
+}
+
+template <typename ElementType, size_t degree>
+void Tensor<ElementType, degree>::Print(std::ostream& stream, size_t dimension, IntTuple<degree>& index) const
+{
+    if(dimension == degree - 1)
+    {
+        stream << "{ " << (*this)(index);
+        for(int i = 1; i<_shape[dimension]; ++i)
         {
-            for (size_t k = 0; k < _numChannels; ++k)
-            {
-                (*this)(i,j,k) = generator();
-            }
+            Next(index);
+            stream << ", " << (*this)(index);
         }
+        Next(index);
+        stream << " }";
+    }
+    else if(dimension == degree - 2)
+    {
+        stream << "{ ";
+        Print(stream, dimension + 1, index);
+        for(int i = 1; i < _shape[dimension]; ++i)
+        {
+            stream << ", ";
+            Print(stream, dimension + 1, index);
+        }
+        stream << " }";
+    }
+    else
+    {
+        stream << "{ ";
+        Print(stream, dimension + 1, index);
+        for (int i = 1; i < _shape[dimension]; ++i)
+        {
+            stream << ",\n" << std::string(dimension * 2 + 2, ' ');
+            Print(stream, dimension + 1, index);
+        }
+        stream << " }";
     }
 }
 
-template <typename ElementType>
-Tensor<ElementType> Tensor<ElementType>::GetSubTensor(size_t firstRow, size_t firstColumns, size_t firstChannel, size_t numRows, size_t numColumns, size_t numChannels) const
+template <typename ElementType, size_t degree>
+bool Tensor<ElementType, degree>::Next(IntTuple<degree>& index) const
 {
-    return {};
+    size_t i = degree;
+    while(i > 0)
+    {
+        --i;
+        ++index[i];
+        if(index[i] < _shape[i])
+        {
+            return true;
+        }
+
+        index[i] = 0;
+    }
+    return false;    
 }
 
-
-template <typename ElementType>
-std::ostream& operator<<(std::ostream& stream, const Tensor<ElementType>& tensor)
+template <typename ElementType, size_t degree>
+bool Tensor<ElementType, degree>::Next(IntTuple<degree>& index, IntTuple<degree> padding) const
 {
-    stream << "{ { { " << tensor(0, 0, 0);
-    for (size_t k = 1; k < tensor.NumChannels(); ++k)
+    size_t i = degree;
+    while(i > 0)
     {
-        stream << ", " << tensor(0, 0, k);
-    }
-    stream << " }";
+        --i;
+        ++index[i];
+        if(index[i] + padding[i] < _shape[i])
+        {
+            return true;
+        }
 
-    for (size_t j = 1; j < tensor.NumColumns(); ++j)
+        index[i] = padding[i];
+    }
+    return false;    
+}
+
+template <typename ElementType, size_t degree>
+bool Tensor<ElementType, degree>::IsOrder(IntTuple<degree> order)
+{
+    for(size_t i = 0; i < degree; ++i)
     {
-        stream << ", { " << tensor(0, j, 0);
-        for (size_t k = 1; k < tensor.NumChannels(); ++k)
+        if (std::find(order.begin(), order.end(), i) == order.end())
         {
-            stream << ", " << tensor(0, j, k);
+            return false;
         }
-        stream << " }";
     }
-    stream << " }";
+    return true;
+}
 
-    for (size_t i = 1; i < tensor.NumRows(); ++i)
+template <typename ElementType, size_t degree>
+IntTuple<degree> Tensor<ElementType, degree>::GetIncrements(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder)
+{
+    assert(IsOrder(minorToMajorOrder));
+
+    IntTuple<degree> increments;
+    size_t size = 1;
+    for (size_t i = 0; i < degree; ++i)
     {
-        stream << "," << std::endl << "  { { " << tensor(i, 0, 0);
-        for (size_t k = 1; k < tensor.NumChannels(); ++k)
-        {
-            stream << ", " << tensor(i, 0, k);
-        }
-        stream << " }";
-
-        for (size_t j = 1; j < tensor.NumColumns(); ++j)
-        {
-            stream << ", { " << tensor(i, j, 0);
-            for (size_t k = 1; k < tensor.NumChannels(); ++k)
-            {
-                stream << ", " << tensor(i, j, k);
-            }
-            stream << " }";
-        }
-        stream << " }";
+        increments[minorToMajorOrder[i]] = size;
+        size *= shape[minorToMajorOrder[i]];
     }
-    stream << " }";
+    return increments;
+}
 
+template <typename ElementType, size_t degree>
+std::ostream& operator<<(std::ostream& stream, const Tensor<ElementType, degree>& tensor)
+{
+    tensor.Print(stream);
     return stream;
 }
 
-template <typename ElementType, typename RandomEngineType>
-Tensor<ElementType> GetRandomTensor(RandomEngineType& engine, size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order, size_t verticalPadding, size_t horizontalPadding)
+template <typename ElementType, size_t degree, typename RandomEngineType>
+Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder, IntTuple<degree> padding)
 {
     // create standard normal random number generator
     std::normal_distribution<ElementType> normal(0, 1);
     auto rng = [&](){ return normal(engine);};
 
-    Tensor<ElementType> T(numRows, numColumns, numChannels, order);
-    T.Generate(rng, verticalPadding, horizontalPadding);
+    Tensor<ElementType, degree> T(shape, minorToMajorOrder);
+    T.Generate(rng, padding);
 
     return T;
-}
-
-template <typename ElementType, typename RandomEngineType>
-std::vector<Tensor<ElementType>> GetRandomTensors(size_t numTensors, RandomEngineType& engine, size_t numRows, size_t numColumns, size_t numChannels, TensorOrder order, size_t verticalPadding, size_t horizontalPadding)
-{
-    std::vector<Tensor<ElementType>> tensors;
-    for(int i=0; i<numTensors; ++i)
-    {
-        tensors.push_back(GetRandomTensor<ElementType>(engine, numRows, numColumns, numChannels, order, verticalPadding, horizontalPadding));
-    }
-
-    return tensors;
 }

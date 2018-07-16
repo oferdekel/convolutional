@@ -18,7 +18,7 @@ int main(int argc, char** argv)
     // define parameters
     size_t numFilterRows = 3;
     size_t numFilterColumns = 3;
-    size_t numFilterChannels = 4;
+    size_t numFilterChannels = 2;
     size_t numFilters = 3;
 
     size_t numOutputRows = 4;
@@ -44,25 +44,29 @@ int main(int argc, char** argv)
     std::seed_seq seed2 = {3929, 437, 859};
     std::default_random_engine engine;
 
-    // generate the same random filters in both orders by repeating the same seed
+    // generate random filters
     engine.seed(seed1);
-    auto WRowMajor = GetRandomTensors<float>(numFilters, engine, numFilterRows, numFilterColumns, numFilterChannels, TensorOrder::RowMajor);
-    
-    engine.seed(seed1);
-    auto WColumnMajor = GetRandomTensors<float>(numFilters, engine, numFilterRows, numFilterColumns, numFilterChannels, TensorOrder::ChannelMajor);
-
+    auto W = GetRandomTensor<float>(engine, { numFilters, numFilterRows, numFilterColumns, numFilterChannels }, RowMajor4TensorOrder);
+ 
     // generate the same random input in both orders and with explicit/implicit padding
     engine.seed(seed2);
-    auto XRowMajorExplicit = GetRandomTensor<float>(engine, numInputRows, numInputColumns, numInputChannels, TensorOrder::RowMajor, verticalInputPadding, horizontalInputPadding);
+    auto XRowMajorExplicit = GetRandomTensor<float>(engine, { numInputRows, numInputColumns, numInputChannels }, RowMajor3TensorOrder, {verticalInputPadding, horizontalInputPadding, 0});
+    XRowMajorExplicit({ 1,1,0 }) = 123;
+    
+    
+    std::cout << XRowMajorExplicit << std::endl << std::endl;
 
     engine.seed(seed2);
-    auto XColumnMajorExplicit = GetRandomTensor<float>(engine, numInputRows, numInputColumns, numInputChannels, TensorOrder::ChannelMajor, verticalInputPadding, horizontalInputPadding);
+    auto XChannelMajorExplicit = GetRandomTensor<float>(engine, { numInputRows, numInputColumns, numInputChannels }, ChannelMajor3TensorOrder, {verticalInputPadding, horizontalInputPadding, 0});
+    std::cout << XChannelMajorExplicit << std::endl << std::endl;
 
     engine.seed(seed2);
-    auto XRowMajorImplicit = GetRandomTensor<float>(engine, numInputContentRows, numInputContentColumns, numInputContentChannels, TensorOrder::RowMajor);
+    auto XRowMajorImplicit = GetRandomTensor<float>(engine, { numInputContentRows, numInputContentColumns, numInputContentChannels }, RowMajor3TensorOrder);
+    std::cout << XRowMajorImplicit << std::endl << std::endl;
 
     engine.seed(seed2);
-    auto XColumnMajorImplicit = GetRandomTensor<float>(engine, numInputContentRows, numInputContentColumns, numInputContentChannels, TensorOrder::ChannelMajor);
+    auto XChannelMajorImplicit = GetRandomTensor<float>(engine, { numInputContentRows, numInputContentColumns, numInputContentChannels }, ChannelMajor3TensorOrder);
+    std::cout << XChannelMajorImplicit << std::endl << std::endl;
 
     return 0;
 }
