@@ -22,18 +22,18 @@ template <size_t degree>
 using IntTuple = std::array<size_t, degree>;
 
 const IntTuple<3> RowMajor3TensorOrder = {2, 1, 0};
-const IntTuple<4> RowMajor4TensorOrder = {3, 2, 1, 0};
 const IntTuple<3> ChannelMajor3TensorOrder = {1, 0, 2};
+const IntTuple<4> RowMajor4TensorOrder = {3, 2, 1, 0};
 
 //
-// Tensor (multi-dimensional array), stored in memory in arbitrary dimension order
+// A Tensor is a multi-dimensional array, which can be represented in memory in different orders. A TensorConstInterface defines all of the const methods of a tensor. A TensorConstInterface does not own allocate its own memory.
 //
 template <typename ElementType, size_t degree>
-class Tensor
+class TensorConstInterface
 {
 public:
     // constructors
-    Tensor(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder);
+    TensorConstInterface(const ElementType* pData, IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder);
 
     // gets the number of rows, columns, channels, ...
     size_t Size(size_t dim) const { return _shape[dim]; }
@@ -46,31 +46,22 @@ public:
     const ElementType& operator()(IntTuple<degree> coordinate) const;
 
     // equality operator
-    bool operator==(const Tensor<ElementType, degree>& other) const;
-    bool operator!=(const Tensor<ElementType, degree>& other) const;
-
-    // sets all tensor elements, other than the padding, to a given value
-    void Fill(ElementType value, IntTuple<degree> padding = {});
-
-    // runs a generator for each element in the tensor, other than the padding
-    template <typename GeneratorType>
-    void Generate(GeneratorType generator, IntTuple<degree> padding = {});
-
-    // Returns a subtensor
-    //Tensor<ElementType> GetSubTensor(IntTuple<degree> firstCoordinate, IntTuple<degree> shape) const;
+    bool operator==(const TensorConstInterface<ElementType, degree>& other) const;
+    bool operator!=(const TensorConstInterface<ElementType, degree>& other) const;
 
     // Returns a pointer to the underlying contiguous data
-    const ElementType* Data() const { return &_data[0]; }
-    ElementType* Data() { return &_data[0]; }
+    const ElementType* Data() const { return _pData; }
 
     // Prints the tensor to a stream
     void Print(std::ostream& ostream) const;
-    void Print(std::ostream& ostream, size_t dimension, IntTuple<degree>& index) const;
 
 protected:
     IntTuple<degree> _shape;
     IntTuple<degree> _increments;
-    std::vector<ElementType> _data;
+    ElementType* _pData;
+
+    // Prints the tensor to a stream
+    void Print(std::ostream& ostream, size_t dimension, IntTuple<degree>& index) const;
 
     // increments the index
     bool Next(IntTuple<degree>& index) const;
@@ -85,7 +76,45 @@ protected:
 
 // Streaming operator. Streams the tensor elements in logical order (row major)
 template <typename ElementType, size_t degree>
-std::ostream& operator<<(std::ostream& stream, const Tensor<ElementType, degree>& tensor);
+std::ostream& operator<<(std::ostream& stream, const TensorConstInterface<ElementType, degree>& tensor);
+
+//
+// A TensorInterface contains all of the non-const methods of a Tensor. A TensorInterface does not allocate its own memory
+//
+
+template <typename ElementType, size_t degree>
+class TensorInterface : public TensorConstInterface<ElementType, degree>
+{
+public:
+    // constructor
+    using TensorConstInterface<ElementType, degree>::TensorConstInterface;
+
+    // gets a reference to a tensor element
+    using TensorConstInterface<ElementType, degree>::operator();
+    ElementType& operator()(IntTuple<degree> coordinate);
+
+    // sets all tensor elements, other than the padding, to a given value
+    void Fill(ElementType value, IntTuple<degree> padding = {});
+
+    // runs a generator for each element in the tensor, other than the padding
+    template <typename GeneratorType>
+    void Generate(GeneratorType generator, IntTuple<degree> padding = {});
+
+    // Returns a pointer to the underlying contiguous data
+    ElementType* Data() { return this->_pData; }
+};
+
+
+template <typename ElementType, size_t degree>
+class Tensor : public TensorInterface<ElementType, degree>
+{
+public: 
+    // constructor
+    Tensor(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder);
+
+private:
+    std::vector<ElementType> _data;
+};
 
 template <typename ElementType, size_t degree, typename RandomEngineType>
 Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder, IntTuple<degree> padding = {});
@@ -95,12 +124,12 @@ Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<d
 //
 
 template <typename ElementType, size_t degree>
-Tensor<ElementType, degree>::Tensor(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder) :
-    _shape(shape), _increments(GetIncrements(shape, minorToMajorOrder)), _data(Size())
+TensorConstInterface<ElementType, degree>::TensorConstInterface(const ElementType* pData, IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder) :
+    _shape(shape), _increments(GetIncrements(shape, minorToMajorOrder)), _pData(const_cast<ElementType*>(pData))
 {}
 
 template <typename ElementType, size_t degree>
-size_t Tensor<ElementType, degree>::Size() const
+size_t TensorConstInterface<ElementType, degree>::Size() const
 {
     size_t size = _shape[0];
     for(size_t i = 1; i < degree; ++i)
@@ -111,29 +140,18 @@ size_t Tensor<ElementType, degree>::Size() const
 }
 
 template <typename ElementType, size_t degree>
-ElementType& Tensor<ElementType, degree>::operator()(IntTuple<degree> coordinate)
-{
-    size_t index = 0;
-    for (size_t i = 0; i < degree; ++i)
-    {
-        index += coordinate[i] * _increments[i];
-    }
-    return _data[index];
-}
-
-template <typename ElementType, size_t degree>
-const ElementType& Tensor<ElementType, degree>::operator()(IntTuple<degree> coordinate) const
+const ElementType& TensorConstInterface<ElementType, degree>::operator()(IntTuple<degree> coordinate) const
 {
     size_t index = 0;
     for(size_t i = 0; i < degree; ++i)
     {
         index += coordinate[i] * _increments[i];
     }
-    return _data[index];
+    return _pData[index];
 }
 
 template <typename ElementType, size_t degree>
-bool Tensor<ElementType, degree>::operator==(const Tensor<ElementType, degree>& other) const
+bool TensorConstInterface<ElementType, degree>::operator==(const TensorConstInterface<ElementType, degree>& other) const
 {
     auto elementComparer = [](ElementType a, ElementType b)
     {
@@ -160,38 +178,20 @@ bool Tensor<ElementType, degree>::operator==(const Tensor<ElementType, degree>& 
 }
 
 template <typename ElementType, size_t degree>
-bool Tensor<ElementType, degree>::operator!=(const Tensor<ElementType, degree>& other) const
+bool TensorConstInterface<ElementType, degree>::operator!=(const TensorConstInterface<ElementType, degree>& other) const
 {
     return !(*this == other);
 }
 
 template <typename ElementType, size_t degree>
-void Tensor<ElementType, degree>::Fill(ElementType value, IntTuple<degree> padding)
-{
-    Generate([&](){ return value; }, padding);
-}
-
-template <typename ElementType, size_t degree>
-template <typename GeneratorType>
-void Tensor<ElementType, degree>::Generate(GeneratorType generator, IntTuple<degree> padding)
-{
-    auto index = padding;
-    do
-    {
-        (*this)(index) = generator();
-    }
-    while(Next(index, padding));
-}
-
-template <typename ElementType, size_t degree>
-void Tensor<ElementType, degree>::Print(std::ostream& stream) const
+void TensorConstInterface<ElementType, degree>::Print(std::ostream& stream) const
 {
     IntTuple<degree> index = {};
     Print(stream, 0, index);
 }
 
 template <typename ElementType, size_t degree>
-void Tensor<ElementType, degree>::Print(std::ostream& stream, size_t dimension, IntTuple<degree>& index) const
+void TensorConstInterface<ElementType, degree>::Print(std::ostream& stream, size_t dimension, IntTuple<degree>& index) const
 {
     if(dimension == degree - 1)
     {
@@ -229,7 +229,7 @@ void Tensor<ElementType, degree>::Print(std::ostream& stream, size_t dimension, 
 }
 
 template <typename ElementType, size_t degree>
-bool Tensor<ElementType, degree>::Next(IntTuple<degree>& index) const
+bool TensorConstInterface<ElementType, degree>::Next(IntTuple<degree>& index) const
 {
     size_t i = degree;
     while(i > 0)
@@ -247,7 +247,7 @@ bool Tensor<ElementType, degree>::Next(IntTuple<degree>& index) const
 }
 
 template <typename ElementType, size_t degree>
-bool Tensor<ElementType, degree>::Next(IntTuple<degree>& index, IntTuple<degree> padding) const
+bool TensorConstInterface<ElementType, degree>::Next(IntTuple<degree>& index, IntTuple<degree> padding) const
 {
     size_t i = degree;
     while(i > 0)
@@ -265,7 +265,7 @@ bool Tensor<ElementType, degree>::Next(IntTuple<degree>& index, IntTuple<degree>
 }
 
 template <typename ElementType, size_t degree>
-bool Tensor<ElementType, degree>::IsOrder(IntTuple<degree> order)
+bool TensorConstInterface<ElementType, degree>::IsOrder(IntTuple<degree> order)
 {
     for(size_t i = 0; i < degree; ++i)
     {
@@ -278,7 +278,7 @@ bool Tensor<ElementType, degree>::IsOrder(IntTuple<degree> order)
 }
 
 template <typename ElementType, size_t degree>
-IntTuple<degree> Tensor<ElementType, degree>::GetIncrements(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder)
+IntTuple<degree> TensorConstInterface<ElementType, degree>::GetIncrements(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder)
 {
     assert(IsOrder(minorToMajorOrder));
 
@@ -297,6 +297,42 @@ std::ostream& operator<<(std::ostream& stream, const Tensor<ElementType, degree>
 {
     tensor.Print(stream);
     return stream;
+}
+
+template <typename ElementType, size_t degree>
+ElementType& TensorInterface<ElementType, degree>::operator()(IntTuple<degree> coordinate)
+{
+    size_t index = 0;
+    for (size_t i = 0; i < degree; ++i)
+    {
+        index += coordinate[i] * this->_increments[i];
+    }
+    return this->_pData[index];
+}
+
+template <typename ElementType, size_t degree>
+void TensorInterface<ElementType, degree>::Fill(ElementType value, IntTuple<degree> padding)
+{
+    Generate([&](){ return value; }, padding);
+}
+
+template <typename ElementType, size_t degree>
+template <typename GeneratorType>
+void TensorInterface<ElementType, degree>::Generate(GeneratorType generator, IntTuple<degree> padding)
+{
+    auto index = padding;
+    do
+    {
+        (*this)(index) = generator();
+    }
+    while(this->Next(index, padding));
+}
+
+template <typename ElementType, size_t degree>
+Tensor<ElementType, degree>::Tensor(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder) :
+    TensorInterface<ElementType, degree>(0, shape, minorToMajorOrder), _data(this->Size())
+{
+    this->_pData = _data.data();
 }
 
 template <typename ElementType, size_t degree, typename RandomEngineType>

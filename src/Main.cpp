@@ -51,22 +51,15 @@ int main(int argc, char** argv)
     // generate the same random input in both orders and with explicit/implicit padding
     engine.seed(seed2);
     auto XRowMajorExplicit = GetRandomTensor<float>(engine, { numInputRows, numInputColumns, numInputChannels }, RowMajor3TensorOrder, {verticalInputPadding, horizontalInputPadding, 0});
-    XRowMajorExplicit({ 1,1,0 }) = 123;
-    
-    
-    std::cout << XRowMajorExplicit << std::endl << std::endl;
 
     engine.seed(seed2);
     auto XChannelMajorExplicit = GetRandomTensor<float>(engine, { numInputRows, numInputColumns, numInputChannels }, ChannelMajor3TensorOrder, {verticalInputPadding, horizontalInputPadding, 0});
-    std::cout << XChannelMajorExplicit << std::endl << std::endl;
 
     engine.seed(seed2);
     auto XRowMajorImplicit = GetRandomTensor<float>(engine, { numInputContentRows, numInputContentColumns, numInputContentChannels }, RowMajor3TensorOrder);
-    std::cout << XRowMajorImplicit << std::endl << std::endl;
 
     engine.seed(seed2);
     auto XChannelMajorImplicit = GetRandomTensor<float>(engine, { numInputContentRows, numInputContentColumns, numInputContentChannels }, ChannelMajor3TensorOrder);
-    std::cout << XChannelMajorImplicit << std::endl << std::endl;
 
     return 0;
 }
