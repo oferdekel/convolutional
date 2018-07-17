@@ -36,7 +36,7 @@ class TensorConstInterface
 {
 public:
     // constructors
-    TensorConstInterface(const ElementType* pData, IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder);
+    TensorConstInterface(const ElementType* pData, IntTuple<degree> shape, IntTuple<degree> order);
 
     // gets the number of rows, columns, channels, ...
     size_t Size(size_t dim) const { return _shape[dim]; }
@@ -45,10 +45,9 @@ public:
     size_t Size() const;
 
     // gets the minor to major order, e.g., MinorToMajor(0) returns the index of the minor dimension
-    size_t MinorToMajorOrder(size_t dimension) { return _minorToMajorOrder[dimension]; }
+    IntTuple<degree> Order() const { return _order; }
 
     // gets a reference to a tensor element
-    ElementType& operator()(IntTuple<degree> coordinate);
     const ElementType& operator()(IntTuple<degree> coordinate) const;
 
     // equality operator
@@ -64,7 +63,7 @@ public:
 protected:
     IntTuple<degree> _shape;
     IntTuple<degree> _increments;
-    IntTuple<degree> _minorToMajorOrder;
+    IntTuple<degree> _order;
     ElementType* _pData;
 
     // Prints the tensor to a stream
@@ -78,7 +77,7 @@ protected:
     static bool IsOrder(IntTuple<degree> order);
 
     // calculates the increments from the shape and the order of the dimensions
-    static IntTuple<degree> GetIncrements(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder);
+    static IntTuple<degree> GetIncrements(IntTuple<degree> shape, IntTuple<degree> order);
 };
 
 // Streaming operator. Streams the tensor elements in logical order (row major)
@@ -117,16 +116,19 @@ class Tensor : public TensorInterface<ElementType, degree>
 {
 public: 
     // constructor
-    Tensor(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder);
+    Tensor(IntTuple<degree> shape, IntTuple<degree> order);
 
 private:
     std::vector<ElementType> _data;
 };
 
 template <typename ElementType, size_t degree, typename RandomEngineType>
-Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder, IntTuple<degree> padding = {});
+Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> padding = {});
 
+//
 // Matrix abbreviations
+//
+
 template <typename ElementType>
 using MatrixConstInterface = TensorConstInterface<ElementType, 2>;
 
@@ -136,13 +138,15 @@ using MatrixInterface = TensorInterface<ElementType, 2>;
 template <typename ElementType>
 using Matrix = Tensor<ElementType, 2>;
 
+using MatrixOrder = IntTuple<2>;
+
 //
 //
 //
 
 template <typename ElementType, size_t degree>
-TensorConstInterface<ElementType, degree>::TensorConstInterface(const ElementType* pData, IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder) :
-    _shape(shape), _increments(GetIncrements(shape, minorToMajorOrder)), _minorToMajorOrder(minorToMajorOrder), _pData(const_cast<ElementType*>(pData))
+TensorConstInterface<ElementType, degree>::TensorConstInterface(const ElementType* pData, IntTuple<degree> shape, IntTuple<degree> order) :
+    _shape(shape), _increments(GetIncrements(shape, order)), _order(order), _pData(const_cast<ElementType*>(pData))
 {}
 
 template <typename ElementType, size_t degree>
@@ -295,16 +299,16 @@ bool TensorConstInterface<ElementType, degree>::IsOrder(IntTuple<degree> order)
 }
 
 template <typename ElementType, size_t degree>
-IntTuple<degree> TensorConstInterface<ElementType, degree>::GetIncrements(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder)
+IntTuple<degree> TensorConstInterface<ElementType, degree>::GetIncrements(IntTuple<degree> shape, IntTuple<degree> order)
 {
-    assert(IsOrder(minorToMajorOrder));
+    assert(IsOrder(order));
 
     IntTuple<degree> increments;
     size_t size = 1;
     for (size_t i = 0; i < degree; ++i)
     {
-        increments[minorToMajorOrder[i]] = size;
-        size *= shape[minorToMajorOrder[i]];
+        increments[order[i]] = size;
+        size *= shape[order[i]];
     }
     return increments;
 }
@@ -346,20 +350,20 @@ void TensorInterface<ElementType, degree>::Generate(GeneratorType generator, Int
 }
 
 template <typename ElementType, size_t degree>
-Tensor<ElementType, degree>::Tensor(IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder) :
-    TensorInterface<ElementType, degree>(0, shape, minorToMajorOrder), _data(this->Size())
+Tensor<ElementType, degree>::Tensor(IntTuple<degree> shape, IntTuple<degree> order) :
+    TensorInterface<ElementType, degree>(0, shape, order), _data(this->Size())
 {
     this->_pData = _data.data();
 }
 
 template <typename ElementType, size_t degree, typename RandomEngineType>
-Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder, IntTuple<degree> padding)
+Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> padding)
 {
     // create standard normal random number generator
     std::normal_distribution<ElementType> normal(0, 1);
     auto rng = [&](){ return normal(engine);};
 
-    Tensor<ElementType, degree> T(shape, minorToMajorOrder);
+    Tensor<ElementType, degree> T(shape, order);
     T.Generate(rng, padding);
 
     return T;

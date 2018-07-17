@@ -10,7 +10,6 @@
 #include <iostream>
 
 #include "BlasHelpers.h"
-#include "Matrix.h"
 #include "Tensor.h"
 
 int main(int argc, char** argv)
