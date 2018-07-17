@@ -21,8 +21,11 @@
 template <size_t degree>
 using IntTuple = std::array<size_t, degree>;
 
-const IntTuple<3> RowMajor3TensorOrder = {2, 1, 0};
-const IntTuple<3> ChannelMajor3TensorOrder = {1, 0, 2};
+// predefined orderings
+const IntTuple<2> RowMajorMatrixOrder = { 1, 0 };
+const IntTuple<2> ColumnMajorMatrixOrder = { 0, 1 };
+const IntTuple<3> RowMajor3TensorOrder = { 2, 1, 0 };
+const IntTuple<3> ChannelMajor3TensorOrder = { 1, 0, 2 };
 const IntTuple<4> RowMajor4TensorOrder = {3, 2, 1, 0};
 
 //
@@ -41,6 +44,9 @@ public:
     // gets the total size of the tensor
     size_t Size() const;
 
+    // gets the minor to major order, e.g., MinorToMajor(0) returns the index of the minor dimension
+    size_t MinorToMajorOrder(size_t dimension) { return _minorToMajorOrder[dimension]; }
+
     // gets a reference to a tensor element
     ElementType& operator()(IntTuple<degree> coordinate);
     const ElementType& operator()(IntTuple<degree> coordinate) const;
@@ -58,6 +64,7 @@ public:
 protected:
     IntTuple<degree> _shape;
     IntTuple<degree> _increments;
+    IntTuple<degree> _minorToMajorOrder;
     ElementType* _pData;
 
     // Prints the tensor to a stream
@@ -119,13 +126,23 @@ private:
 template <typename ElementType, size_t degree, typename RandomEngineType>
 Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder, IntTuple<degree> padding = {});
 
+// Matrix abbreviations
+template <typename ElementType>
+using MatrixConstInterface = TensorConstInterface<ElementType, 2>;
+
+template <typename ElementType>
+using MatrixInterface = TensorInterface<ElementType, 2>;
+
+template <typename ElementType>
+using Matrix = Tensor<ElementType, 2>;
+
 //
 //
 //
 
 template <typename ElementType, size_t degree>
 TensorConstInterface<ElementType, degree>::TensorConstInterface(const ElementType* pData, IntTuple<degree> shape, IntTuple<degree> minorToMajorOrder) :
-    _shape(shape), _increments(GetIncrements(shape, minorToMajorOrder)), _pData(const_cast<ElementType*>(pData))
+    _shape(shape), _increments(GetIncrements(shape, minorToMajorOrder)), _minorToMajorOrder(minorToMajorOrder), _pData(const_cast<ElementType*>(pData))
 {}
 
 template <typename ElementType, size_t degree>

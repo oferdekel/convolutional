@@ -12,7 +12,6 @@ set(include
 set(src
     src/BlasHelpers.cpp
     src/Main.cpp
-    src/Matrix.cpp
 )
 
 source_group("src" FILES ${src})

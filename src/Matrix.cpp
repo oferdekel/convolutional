@@ -6,14 +6,14 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "Matrix.h"
+// #include "Matrix.h"
 
-MatrixOrder flipOrder(MatrixOrder order)
-{
-    if (order == MatrixOrder::RowMajor)
-    {
-        return MatrixOrder::ColumnMajor;
-    }
-    return MatrixOrder::RowMajor;
-}
+// MatrixOrder flipOrder(MatrixOrder order)
+// {
+//     if (order == MatrixOrder::RowMajor)
+//     {
+//         return MatrixOrder::ColumnMajor;
+//     }
+//     return MatrixOrder::RowMajor;
+// }
 
