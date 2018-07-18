@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     engine.seed(seed1);
     auto W = GetRandomTensor<float>(engine, { numFilters, numFilterRows, numFilterColumns, numFilterChannels }, RowMajor4TensorOrder);
  
-    // generate the same random input in both orders and with explicit/implicit padding
+    // generate the same input in both row and channel major orders, and with both explicit and implicit padding
     engine.seed(seed2);
     auto XRowMajorExplicit = GetRandomTensor<float>(engine, { numInputRows, numInputColumns, numInputChannels }, RowMajor3TensorOrder, {verticalInputPadding, horizontalInputPadding, 0});
 

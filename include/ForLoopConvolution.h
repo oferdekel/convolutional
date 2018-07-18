@@ -9,32 +9,27 @@
 #pragma once
 
 template <typename ElementType>
-void ForLoopConvolution(const ElementType* WRowMaj, const ElementType* XRowMaj, int Yrows, int Ycols, int Wrows, int Wcols, int Wchls, int sv, int sh)
+void ForLoopConvolution(const ElementType* WRowMaj, const ElementType* XRowMaj, int yRows, int yCols, int wRows, int wCols, int wChls, int vStride, int hStride)
 {
-
+    for (int yRow = 0; yRow < yRows; ++yRow)
+    {
+        for (int yCol = 0; yCol < yCols; ++yCol)
+        {
+            for (int yChl = 0; yChl < yChls; ++yChl)
+            {
+                ElementType value = 0;
+                for (int wRow = 0; wRow < wRows; ++wRow)
+                {
+                    for (int wCol = 0; wCol < wCols; ++wCol)
+                    {
+                        for (int wChl = 0; wChl < wChls; ++wChl)
+                        {
+                            value += W({ yChl, wRow, wCol, wChl }) * X({ yRow * vStride + wRow, yCol * hStride + wCol, wChl });
+                        }
+                    }
+                }
+                Y({ yRow, yCol, yChl }) = value;
+            }
+        }
+    }
 }
-
-
-
-
-//     for (int r = 0; r < _a; ++r)
-//     {
-//         for (int s = 0; s < _b; ++s)
-//         {
-//             for (int t = 0; t < _c; ++t)
-//             {
-//                 ElementType value = 0;
-//                 for (int i = 0; i < _l; ++i)
-//                 {
-//                     for (int j = 0; j < _m; ++j)
-//                     {
-//                         for (int k = 0; k < _n; ++k)
-//                         {
-//                             value += _W[t](i, j, k) * X(r * _p + i, s * _q + j, k);
-//                         }
-//                     }
-//                 }
-
-
-// void UnrollInput(float* U, const float* XRowMaj, int Yrows, int Ycols, int Wrows, int Wcols, int Wchls, int sv, int sh)
-// {
