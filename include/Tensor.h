@@ -8,25 +8,23 @@
 #pragma once
 
 // stl
-#include <algorithm>
-#include <cmath>
-#include <cstdlib>
-#include <iostream>
-#include <memory>
-#include <random>
-#include <vector>
-#include <array>
-#include <string>
+#include <algorithm> // std::find
+#include <cstddef> // size_t
+#include <iostream> // ostream
+#include <random> // std::normal_distribution
+#include <vector> // std::vector
+#include <array> // std::array
+#include <string> // std::string
 
 template <size_t degree>
 using IntTuple = std::array<size_t, degree>;
 
 // predefined orderings
-const IntTuple<2> RowMajorMatrixOrder = { 1, 0 };
-const IntTuple<2> ColumnMajorMatrixOrder = { 0, 1 };
-const IntTuple<3> RowMajor3TensorOrder = { 2, 1, 0 };
-const IntTuple<3> ChannelMajor3TensorOrder = { 1, 0, 2 };
-const IntTuple<4> RowMajor4TensorOrder = {3, 2, 1, 0};
+const IntTuple<2> RowMaj2Order = { 1, 0 };
+const IntTuple<2> ColMaj2Order = { 0, 1 };
+const IntTuple<3> RowMaj3Order = { 2, 1, 0 };
+const IntTuple<3> ChlMaj3Order = { 1, 0, 2 };
+const IntTuple<4> RowMaj4Order = {3, 2, 1, 0};
 
 //
 // A Tensor is a multi-dimensional array, which can be represented in memory in different orders. A TensorConstInterface defines all of the const methods of a tensor. A TensorConstInterface does not own allocate its own memory.
@@ -36,6 +34,9 @@ class TensorConstInterface
 {
 public:
     // constructors
+    // pData - pointer to the data array
+    // shape - the number of rows, cols, chls, ...
+    // order - a permuation of 0,1,2,... that specifies the memory layout order of the dimensions (from minor to major)
     TensorConstInterface(const ElementType* pData, IntTuple<degree> shape, IntTuple<degree> order);
 
     // gets the number of rows, columns, channels, ...

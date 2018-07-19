@@ -27,9 +27,9 @@ void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, size_t m, size_
 
 void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, size_t m, size_t n, size_t k, float alpha, const float* A, size_t lda, const float* B, size_t ldb, float beta, float* C, size_t ldc)
 {
-    MatrixOrder orderA = isRowMajor ^ transposeA ? RowMajorMatrixOrder : ColumnMajorMatrixOrder;
-    MatrixOrder orderB = isRowMajor ^ transposeB ? RowMajorMatrixOrder : ColumnMajorMatrixOrder;
-    MatrixOrder orderC = isRowMajor ? RowMajorMatrixOrder : ColumnMajorMatrixOrder;
+    MatrixOrder orderA = isRowMajor ^ transposeA ? RowMaj2Order : ColMaj2Order;
+    MatrixOrder orderB = isRowMajor ^ transposeB ? RowMaj2Order : ColMaj2Order;
+    MatrixOrder orderC = isRowMajor ? RowMaj2Order : ColMaj2Order;
 
     auto AMat = MatrixConstInterface<float>(A, { m, k }, orderA); 
     auto BMat = MatrixConstInterface<float>(B, { k, n }, orderB);

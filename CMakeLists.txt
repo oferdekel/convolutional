@@ -7,6 +7,7 @@ set(include
     include/BlasHelpers.h
     include/ForLoopConvolution.h
     include/Tensor.h
+    include/UnrolledConvolution.h
 )
 
 set(src
