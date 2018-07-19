@@ -14,7 +14,7 @@
 // BLAS
 #include <cblas.h>
 
-void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, size_t m, size_t n, size_t k, float alpha, const float* A, size_t lda, const float* B, size_t ldb, float beta, float* C, size_t ldc)
+void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, int m, int n, int k, float alpha, const float* A, int lda, const float* B, int ldb, float beta, float* C, int ldc)
 {
     CBLAS_ORDER blasOrder = isRowMajor ? CBLAS_ORDER::CblasRowMajor : CBLAS_ORDER::CblasColMajor;
     CBLAS_TRANSPOSE blasTransposeA = transposeA ? CBLAS_TRANSPOSE::CblasTrans : CBLAS_TRANSPOSE::CblasNoTrans;
@@ -25,7 +25,7 @@ void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, size_t m, size_
 
 #else
 
-void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, size_t m, size_t n, size_t k, float alpha, const float* A, size_t lda, const float* B, size_t ldb, float beta, float* C, size_t ldc)
+void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, int m, int n, int k, float alpha, const float* A, int lda, const float* B, int ldb, float beta, float* C, int ldc)
 {
     MatrixOrder orderA = isRowMajor ^ transposeA ? RowMaj2Order : ColMaj2Order;
     MatrixOrder orderB = isRowMajor ^ transposeB ? RowMaj2Order : ColMaj2Order;
@@ -35,12 +35,12 @@ void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, size_t m, size_
     auto BMat = MatrixConstInterface<float>(B, { k, n }, orderB);
     auto CMat = MatrixInterface<float>(C, { m, n }, orderC);
 
-    for (size_t i = 0; i < CMat.Size(0); ++i)
+    for (int i = 0; i < CMat.Size(0); ++i)
     {
-        for (size_t j = 0; j < CMat.Size(1); ++j)
+        for (int j = 0; j < CMat.Size(1); ++j)
         {
             float value = 0;
-            for (size_t k = 0; k < AMat.Size(1); ++k)
+            for (int k = 0; k < AMat.Size(1); ++k)
             {
                 value += AMat({i, k}) * BMat({k, j});
             }
@@ -51,16 +51,16 @@ void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, size_t m, size_
 
 #endif
 
-void Gemm(bool isARowMajor, bool isBRowMajor, bool isCRowMajor, size_t m, size_t n, size_t k, float alpha, const float* A, size_t lda, const float* B, size_t ldb, float beta, float* C, size_t ldc)
+void Gemm(bool isARowMajor, bool isBRowMajor, bool isCRowMajor, int m, int n, int k, float alpha, const float* A, int lda, const float* B, int ldb, float beta, float* C, int ldc)
 {
     BLASGemm(isCRowMajor, isARowMajor ^ isCRowMajor, isBRowMajor ^ isCRowMajor, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 }
 
-void Gemm(bool isARowMajor, bool isBRowMajor, bool isCRowMajor, size_t m, size_t n, size_t k, float alpha, const float* A, const float* B, float beta, float* C)
+void Gemm(bool isARowMajor, bool isBRowMajor, bool isCRowMajor, int m, int n, int k, float alpha, const float* A, const float* B, float beta, float* C)
 {
-    size_t lda = isARowMajor ? k : m;
-    size_t ldb = isBRowMajor ? n : k;
-    size_t ldc = isCRowMajor ? n : m;
+    int lda = isARowMajor ? k : m;
+    int ldb = isBRowMajor ? n : k;
+    int ldc = isCRowMajor ? n : m;
     Gemm(isARowMajor, isBRowMajor, isCRowMajor, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 }
 

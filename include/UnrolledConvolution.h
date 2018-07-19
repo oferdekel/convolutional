@@ -7,19 +7,50 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "BlasHelpers.h"
+#include "Tensor.h"
+
+#include <vector>
 
 template <typename ElementType>
-void UnrollInput(const ElementType* WRowMaj, const ElementType* XRowMaj, ElementType* YRowMaj, size_t wCount, size_t wRows, size_t wCols, size_t wChls, size_t vStride, size_t hStride, size_t yRows, size_t yCols)
+void UnrollInput(const ElementType* XRowMaj, ElementType* U, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
 {
-
+    int xCols = hStride * (yCols - 1) + wCols;
+    int xChls = wChls;
+    int copySize = wCols * wChls;
+    
+    for(int yRow = 0; yRow < yRows; ++yRow) 
+    {
+        for(int yCol = 0; yCol < yCols; ++yCol) 
+        {
+            for(int wRow = 0; wRow < wRows; ++wRow) 
+            {
+                // calculate memcpy target
+                int urow = yRow * yCols + yCol;
+                float* target = U + (urow * wRows + wRow) * wCols * wChls;
+                
+                // calculate memcpy source
+                int xRow = yRow * vStride + wRow;
+                int xCol = yCol * hStride;
+                const float* source = XRowMaj + (xRow * xCols + xCol) * xChls;
+                
+                // copy from X to U
+                memcpy(target, source, copySize);
+            }  
+        }   
+    }   
 }
 
 template <typename ElementType>
-void UnrolledConvolution(const ElementType* WRowMaj, const ElementType* XRowMaj, ElementType* YRowMaj, size_t wCount, size_t wRows, size_t wCols, size_t wChls, size_t vStride, size_t hStride, size_t yRows, size_t yCols)
+void UnrolledConvolution(const ElementType* WRowMaj, const ElementType* XRowMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
 {
-    size_t yChls = wCount;
-    size_t xRows = (yRows - 1) * vStride + wRows;
-    size_t xCols = (yCols - 1) * hStride + wCols;
-    size_t xChls = wChls;
+    int yChls = wCount;
+    int xRows = (yRows - 1) * vStride + wRows;
+    int xCols = (yCols - 1) * hStride + wCols;
+    int xChls = wChls;
 
+    std::vector<ElementType> U(100);
+    UnrollInput(XRowMaj, U.data(), wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+
+    Matrix<ElementType> UMat({1,1}, RowMaj2Order);
+    std::cout << UMat << std::endl;
 }
