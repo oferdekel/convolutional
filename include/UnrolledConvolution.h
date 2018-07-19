@@ -9,7 +9,8 @@
 #include "BlasHelpers.h"
 #include "Tensor.h"
 
-#include <vector>
+#include <cstring> // memcpy
+#include <vector> // std::vector
 
 template <typename ElementType>
 void UnrollInput(const ElementType* XRowMaj, ElementType* U, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)

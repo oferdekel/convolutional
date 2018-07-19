@@ -47,20 +47,20 @@ int main(int argc, char** argv)
 
     // generate random filters
     engine.seed(seed1);
-    auto W = GetRandomTensor<float>(engine, { wCount, wRows, wCols, wChls }, RowMaj4Order);
+    auto W = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, RowMaj4Order);
  
     // generate the same input in both row and channel major orders, and with both exp and imp padding
     engine.seed(seed2);
-    auto XRowMajExp = GetRandomTensor<float>(engine, { xRows, xCols, xChls }, RowMaj3Order, {xVPad, xHPad, 0});
+    auto XRowMajExp = GetRandomTensor<float, 3>(engine, { xRows, xCols, xChls }, RowMaj3Order, {xVPad, xHPad, 0});
 
     engine.seed(seed2);
-    auto XChlMajExp = GetRandomTensor<float>(engine, { xRows, xCols, xChls }, ChlMaj3Order, {xVPad, xHPad, 0});
+    auto XChlMajExp = GetRandomTensor<float, 3>(engine, { xRows, xCols, xChls }, ChlMaj3Order, {xVPad, xHPad, 0});
 
     engine.seed(seed2);
-    auto XRowMajImp = GetRandomTensor<float>(engine, { xIntRows, xIntCols, xIntChls }, RowMaj3Order);
+    auto XRowMajImp = GetRandomTensor<float, 3>(engine, { xIntRows, xIntCols, xIntChls }, RowMaj3Order);
 
     engine.seed(seed2);
-    auto XChlMajImp = GetRandomTensor<float>(engine, { xIntRows, xIntCols, xIntChls }, ChlMaj3Order);
+    auto XChlMajImp = GetRandomTensor<float, 3>(engine, { xIntRows, xIntCols, xIntChls }, ChlMaj3Order);
 
     // for loop convolution
     auto Y0 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
