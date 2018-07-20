@@ -216,7 +216,10 @@ void TensorConstInterface<ElementType, degree>::Print(std::ostream& stream, int 
 {
     if(dimension == degree - 1)
     {
-        stream << "{ " << (*this)(index);
+        stream << "{ ";
+        stream << (*this)(index);
+        int x = 5;
+
         for(int i = 1; i<_shape[dimension]; ++i)
         {
             Next(index);
@@ -351,7 +354,7 @@ void TensorInterface<ElementType, degree>::Generate(GeneratorType generator, Int
 
 template <typename ElementType, int degree>
 Tensor<ElementType, degree>::Tensor(IntTuple<degree> shape, IntTuple<degree> order) :
-    TensorInterface<ElementType, degree>(0, shape, order), _data(this->Size())
+    TensorInterface<ElementType, degree>(nullptr, shape, order), _data(this->Size())
 {
     this->_pData = _data.data();
 }

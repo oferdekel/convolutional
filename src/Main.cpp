@@ -68,6 +68,9 @@ int main(int argc, char** argv)
 
     // unrolled convolution
     auto Y1 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
+
+    std::cout << XRowMajExp << std::endl << std::endl;
+
     UnrolledConvolution(W.Data(), XRowMajExp.Data(), Y1.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
 
     return 0;

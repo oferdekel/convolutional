@@ -52,6 +52,17 @@ void UnrolledConvolution(const ElementType* WRowMaj, const ElementType* XRowMaj,
     std::vector<ElementType> U(100);
     UnrollInput(XRowMaj, U.data(), wRows, wCols, wChls, vStride, hStride, yRows, yCols);
 
-    Matrix<ElementType> UMat({1,1}, RowMaj2Order);
-    std::cout << UMat << std::endl;
+    Tensor<ElementType,3> UMat({3,3,3}, RowMaj3Order);
+    std::cout << *UMat.Data();
+    //std::cout << UMat({0,0});
+    // std::cout << UMat({1,0});
+    // std::cout << UMat({2,0});
+    // std::cout << UMat({0,1});
+    // std::cout << UMat({1,1});
+    // std::cout << UMat({2,1});
+    // std::cout << UMat({0,2});
+    // std::cout << UMat({1,2});
+    // std::cout << UMat({2,2});
+
+    //std::cout << UMat << std::endl;
 }
