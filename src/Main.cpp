@@ -68,16 +68,15 @@ int main(int argc, char** argv)
     // for loop convolution
     auto Y0 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
     ForLoopConvolution(WRowMaj.Data(), XRowMajExp.Data(), Y0.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+    std::cout << Y0 << std::endl << std::endl;
 
     // unrolled convolutions
     auto Y1 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
     UnrolledConvolutionRowMaj(WRowMaj.Data(), XRowMajExp.Data(), Y1.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+    std::cout << Y1 << std::endl << std::endl;
 
     auto Y2 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
     UnrolledConvolutionChlMaj(WRowMaj.Data(), XChlMajExp.Data(), Y2.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
-
-    std::cout << Y0 << std::endl << std::endl;
-    std::cout << Y1 << std::endl << std::endl;
     std::cout << Y2 << std::endl << std::endl;
 
     return 0;
