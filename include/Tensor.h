@@ -24,6 +24,7 @@ const IntTuple<2> ColMaj2Order = { 0, 1 };
 const IntTuple<3> RowMaj3Order = { 2, 1, 0 };
 const IntTuple<3> ChlMaj3Order = { 1, 0, 2 };
 const IntTuple<4> RowMaj4Order = {3, 2, 1, 0};
+const IntTuple<4> ChlMaj4Order = {2, 1, 3, 0};
 
 //
 // A Tensor is a multi-dimensional array, which can be represented in memory in different orders. A TensorConstInterface defines all of the const methods of a tensor. A TensorConstInterface does not own allocate its own memory.
@@ -235,6 +236,10 @@ void TensorConstInterface<ElementType, degree>::Print(std::ostream& stream, int 
         for(int i = 1; i < _shape[dimension]; ++i)
         {
             stream << ", ";
+            if(degree == 2)
+            {
+                stream << std::endl << "  ";
+            }
             Print(stream, dimension + 1, index);
         }
         stream << " }";
@@ -317,7 +322,7 @@ IntTuple<degree> TensorConstInterface<ElementType, degree>::GetIncrements(IntTup
 }
 
 template <typename ElementType, int degree>
-std::ostream& operator<<(std::ostream& stream, const Tensor<ElementType, degree>& tensor)
+std::ostream& operator<<(std::ostream& stream, const TensorConstInterface<ElementType, degree>& tensor)
 {
     tensor.Print(stream);
     return stream;

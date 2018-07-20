@@ -26,8 +26,8 @@ void UnrollInput(const ElementType* XRowMaj, ElementType* U, int wRows, int wCol
             for(int wRow = 0; wRow < wRows; ++wRow) 
             {
                 // calculate memcpy target
-                int urow = yRow * yCols + yCol;
-                float* target = U + (urow * wRows + wRow) * wCols * wChls;
+                int uRow = yRow * yCols + yCol;
+                float* target = U + (uRow * wRows + wRow) * copySize;
                 
                 // calculate memcpy source
                 int xRow = yRow * vStride + wRow;
@@ -35,34 +35,27 @@ void UnrollInput(const ElementType* XRowMaj, ElementType* U, int wRows, int wCol
                 const float* source = XRowMaj + (xRow * xCols + xCol) * xChls;
                 
                 // copy from X to U
-                memcpy(target, source, copySize);
+                memcpy(target, source, copySize * sizeof(ElementType));
             }  
         }   
     }   
 }
 
 template <typename ElementType>
-void UnrolledConvolution(const ElementType* WRowMaj, const ElementType* XRowMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+void UnrolledConvolution(const ElementType* WChlMaj, const ElementType* XRowMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
 {
     int yChls = wCount;
     int xRows = (yRows - 1) * vStride + wRows;
     int xCols = (yCols - 1) * hStride + wCols;
-    int xChls = wChls;
 
-    std::vector<ElementType> U(100);
-    UnrollInput(XRowMaj, U.data(), wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+    int uRows = yRows * yCols;
+    int uCols = wRows * wCols * wChls;
+    int vCols = wCount;
 
-    Tensor<ElementType,3> UMat({3,3,3}, RowMaj3Order);
-    std::cout << *UMat.Data();
-    //std::cout << UMat({0,0});
-    // std::cout << UMat({1,0});
-    // std::cout << UMat({2,0});
-    // std::cout << UMat({0,1});
-    // std::cout << UMat({1,1});
-    // std::cout << UMat({2,1});
-    // std::cout << UMat({0,2});
-    // std::cout << UMat({1,2});
-    // std::cout << UMat({2,2});
+    const ElementType* VColMaj = WChlMaj;
+    ElementType* ZRowMaj = YRowMaj;
 
-    //std::cout << UMat << std::endl;
+    std::vector<ElementType> URowMaj(uRows * uCols);
+    UnrollInput(XRowMaj, URowMaj.data(), wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+    Gemm(true, false, true, uRows, vCols, uCols, 1, URowMaj.data(), VColMaj, 1, ZRowMaj);
 }

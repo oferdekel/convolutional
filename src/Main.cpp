@@ -47,7 +47,10 @@ int main(int argc, char** argv)
 
     // generate random filters
     engine.seed(seed1);
-    auto W = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, RowMaj4Order);
+    auto WRowMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, RowMaj4Order);
+ 
+    engine.seed(seed1);
+    auto WChlMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, ChlMaj4Order);
  
     // generate the same input in both row and channel major orders, and with both exp and imp padding
     engine.seed(seed2);
@@ -64,14 +67,14 @@ int main(int argc, char** argv)
 
     // for loop convolution
     auto Y0 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
-    ForLoopConvolution(W.Data(), XRowMajExp.Data(), Y0.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+    ForLoopConvolution(WRowMaj.Data(), XRowMajExp.Data(), Y0.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
 
     // unrolled convolution
     auto Y1 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
+    UnrolledConvolution(WRowMaj.Data(), XRowMajExp.Data(), Y1.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
 
-    std::cout << XRowMajExp << std::endl << std::endl;
-
-    UnrolledConvolution(W.Data(), XRowMajExp.Data(), Y1.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+    std::cout << Y0 << std::endl << std::endl;
+    std::cout << Y1 << std::endl << std::endl;
 
     return 0;
 }
