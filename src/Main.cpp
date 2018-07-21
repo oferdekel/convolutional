@@ -11,6 +11,7 @@
 
 #include "BlasHelpers.h"
 #include "ForLoopConvolution.h"
+#include "PaddedConvolution.h"
 #include "UnrolledConvolution.h"
 #include "Tensor.h"
 
@@ -78,6 +79,12 @@ int main(int argc, char** argv)
     auto Y2 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
     UnrolledConvolutionChlMaj(WRowMaj.Data(), XChlMajExp.Data(), Y2.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
     std::cout << Y2 << std::endl << std::endl;
+
+    // padded convolutions
+    auto Y3 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
+    UnrolledConvolutionChlMaj(WRowMaj.Data(), XChlMajImp.Data(), Y3.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+    std::cout << Y3 << std::endl << std::endl;
+
 
     return 0;
 }
