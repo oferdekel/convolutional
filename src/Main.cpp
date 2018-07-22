@@ -82,9 +82,8 @@ int main(int argc, char** argv)
 
     // padded convolutions
     auto Y3 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
-    PaddedConvolution(WRowMaj.Data(), XChlMajImp.Data(), Y3.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+    ImplicitlyPaddedConvolution(WRowMaj.Data(), XChlMajImp.Data(), Y3.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
     std::cout << Y3 << std::endl << std::endl;
-
 
     return 0;
 }

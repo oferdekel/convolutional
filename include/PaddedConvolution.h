@@ -12,7 +12,7 @@
 #include <string>
 
 template <typename ElementType>
-void PaddedConvolutionDelete(ElementType* begin, int skip, int singles, int size,  int intervals)
+void StructuredDelete(ElementType* begin, int skip, int singles, int size,  int intervals)
 {
     begin += skip;
     for(int i = 0; i < singles; ++i)
@@ -34,7 +34,7 @@ void PaddedConvolutionDelete(ElementType* begin, int skip, int singles, int size
 }
 
 template <typename ElementType>
-void PaddedConvolution(const ElementType* WRowMaj, const ElementType* XChlMajImp, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+void ImplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* XChlMajImp, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
 {
     assert(hStride == 1);
     assert(vStride == 1);
@@ -50,39 +50,48 @@ void PaddedConvolution(const ElementType* WRowMaj, const ElementType* XChlMajImp
     auto blockSize = yCols * yRows * wChls;
 
     // unroll input
+    // input block corresponding to TOP LEFT filter elements (across all channels)
     std::copy(XChlMajImp, XChlMajImp + blockSize - yCols - 1, UColMajBlock + yCols + 1);
-    PaddedConvolutionDelete(UColMajBlock + yCols, yCols, yRows - 2, yCols + 1, wChls - 1);
+    StructuredDelete(UColMajBlock + yCols, yCols, yRows - 2, yCols + 1, wChls - 1);
     UColMajBlock += blockSize;
 
+    // input block corresponding to TOP CENTER filter elements (across all channels)
     std::copy(XChlMajImp, XChlMajImp + blockSize - yCols, UColMajBlock + yCols);
-    PaddedConvolutionDelete(UColMajBlock + yCols - 1, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
+    StructuredDelete(UColMajBlock + yCols - 1, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
     UColMajBlock += blockSize;
 
+    // input block corresponding to TOP RIGHT filter elements (across all channels)
     std::copy(XChlMajImp + 1, XChlMajImp + blockSize - yCols, UColMajBlock + yCols);
-    PaddedConvolutionDelete(UColMajBlock + yCols - 1, yCols, yRows - 2, yCols + 1, wChls - 1);
+    StructuredDelete(UColMajBlock + yCols - 1, yCols, yRows - 2, yCols + 1, wChls - 1);
     UColMajBlock += blockSize;
 
+    // input block corresponding to MID LEFT filter elements (across all channels)
     std::copy(XChlMajImp, XChlMajImp + blockSize - 1, UColMajBlock + 1);
-    PaddedConvolutionDelete(UColMajBlock, yCols, yRows * wChls - 1, 0, 0);
+    StructuredDelete(UColMajBlock, yCols, yRows * wChls - 1, 0, 0);
     UColMajBlock += blockSize;
 
+    // input block corresponding to MID CENTER filter elements (across all channels)
     std::copy(XChlMajImp, XChlMajImp + blockSize, UColMajBlock);
     UColMajBlock += blockSize;
 
+    // input block corresponding to MID RIGHT filter elements (across all channels)
     std::copy(XChlMajImp + 1, XChlMajImp + blockSize, UColMajBlock);
-    PaddedConvolutionDelete(UColMajBlock - 1, yCols, yRows * wChls - 1, 0, 0);
+    StructuredDelete(UColMajBlock - 1, yCols, yRows * wChls - 1, 0, 0);
     UColMajBlock += blockSize;
 
+    // input block corresponding to BOTTOM LEFT filter elements (across all channels)
     std::copy(XChlMajImp + yCols, XChlMajImp + blockSize - 1, UColMajBlock + 1);
-    PaddedConvolutionDelete(UColMajBlock, yCols, yRows - 2, yCols + 1, wChls - 1);
+    StructuredDelete(UColMajBlock, yCols, yRows - 2, yCols + 1, wChls - 1);
     UColMajBlock += blockSize;
 
+    // input block corresponding to BOTTOM CENTER filter elements (across all channels)
     std::copy(XChlMajImp + yCols, XChlMajImp + blockSize, UColMajBlock);
-    PaddedConvolutionDelete(UColMajBlock - 1, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
+    StructuredDelete(UColMajBlock - 1, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
     UColMajBlock += blockSize;
 
+    // input block corresponding to BOTTOM RIGHT filter elements (across all channels)
     std::copy(XChlMajImp + yCols + 1, XChlMajImp + blockSize, UColMajBlock);
-    PaddedConvolutionDelete(UColMajBlock - 1, yCols, yRows - 2, yCols + 1, wChls - 1);
+    StructuredDelete(UColMajBlock - 1, yCols, yRows - 2, yCols + 1, wChls - 1);
 
     // matrix-matrix multiply
     Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), WRowMaj, 1, YRowMaj);

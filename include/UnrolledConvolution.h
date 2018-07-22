@@ -9,7 +9,6 @@
 #include "BlasHelpers.h"
 #include "Tensor.h"
 
-#include <cstring> // memcpy
 #include <vector> // std::vector
 
 template <typename ElementType>
@@ -36,17 +35,17 @@ void UnrolledConvolutionRowMaj(const ElementType* WRowMaj, const ElementType* XR
         {
             for(int wRow = 0; wRow < wRows; ++wRow) 
             {
-                // calculate memcpy target
-                int uRow = yRow * yCols + yCol;
-                float* target = URowMaj.data() + (uRow * wRows + wRow) * copySize;
-                
-                // calculate memcpy source
+                // calculate copy source
                 int xRow = yRow * vStride + wRow;
                 int xCol = yCol * hStride;
                 const float* source = XRowMaj + (xRow * xCols + xCol) * xChls;
-                
+
+                // calculate copy target
+                int uRow = yRow * yCols + yCol;
+                float* target = URowMaj.data() + (uRow * wRows + wRow) * copySize;
+
                 // copy from X to U
-                memcpy(target, source, copySize * sizeof(ElementType));
+                std::copy(source, source + copySize, target);
             }  
         }   
     }   
@@ -79,18 +78,18 @@ void UnrolledConvolutionChlMaj(const ElementType* WRowMaj, const ElementType* XC
             for(int wChl = 0; wChl < wChls; ++wChl) {
                 for(int yRow = 0; yRow < yRows; ++yRow) {
 
-                    // calculate memcpy target
-                    int uCol =  (wRow * wCols + wCol) * wChls + wChl;
-                    ElementType* target = UColMaj.data() + (uCol * yRows + yRow) * yCols;
-
-                    // calculate memcpy source
+                    // calculate copy source
                     int xRow = yRow * vStride + wRow;
                     int xCol = wCol;
                     int xChl = wChl;
                     const float* source = XChlMaj + (xChl * xRows + xRow) * xCols + xCol;
                     
+                    // calculate copy target
+                    int uCol =  (wRow * wCols + wCol) * wChls + wChl;
+                    ElementType* target = UColMaj.data() + (uCol * yRows + yRow) * yCols;
+
                     // copy from X to U
-                    memcpy(target, source, copySize * sizeof(ElementType));
+                    std::copy(source, source + copySize, target);
                 }   
             }  
         }   

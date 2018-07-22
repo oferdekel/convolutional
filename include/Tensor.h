@@ -8,12 +8,12 @@
 #pragma once
 
 // stl
-#include <algorithm> // std::find
-#include <iostream> // ostream
-#include <random> // std::normal_distribution
-#include <vector> // std::vector
-#include <array> // std::array
-#include <string> // std::string
+#include <algorithm> // for std::find
+#include <iostream>
+#include <random> // for std::normal_distribution
+#include <vector>
+#include <array>
+#include <string>
 
 template <int degree>
 using IntTuple = std::array<int, degree>;
@@ -29,14 +29,15 @@ const IntTuple<4> ChlMaj4Order = {2, 1, 3, 0};
 //
 // A Tensor is a multi-dimensional array, which can be represented in memory in different orders. A TensorConstInterface defines all of the const methods of a tensor. A TensorConstInterface does not own allocate its own memory.
 //
+
 template <typename ElementType, int degree>
 class TensorConstInterface
 {
 public:
-    // constructors
-    // pData - pointer to the data array
-    // shape - the number of rows, cols, chls, ...
-    // order - a permuation of 0,1,2,... that specifies the memory layout order of the dimensions (from minor to major)
+    // constructor
+    // pData: pointer to the data array
+    // shape: the number of rows, cols, chls, ...
+    // order: a permuation of 0,1,2,... which specifies the order of the dimensions in memory (from minor to major)
     TensorConstInterface(const ElementType* pData, IntTuple<degree> shape, IntTuple<degree> order);
 
     // gets the number of rows, columns, channels, ...
@@ -111,6 +112,9 @@ public:
     ElementType* Data() { return this->_pData; }
 };
 
+//
+// A Tensor implements TensorInterface but also owns its own memory
+//
 
 template <typename ElementType, int degree>
 class Tensor : public TensorInterface<ElementType, degree>
@@ -127,7 +131,7 @@ template <typename ElementType, int degree, typename RandomEngineType>
 Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> padding = {});
 
 //
-// Matrix abbreviations
+// Matrix (degree 2 Tensors) abbreviations
 //
 
 template <typename ElementType>
