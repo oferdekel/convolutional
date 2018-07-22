@@ -23,8 +23,8 @@ int main(int argc, char** argv)
     int wChls = 2;
     int wCount = 3;
 
-    int yRows = 4;
-    int yCols = 4;
+    int yRows = 6;
+    int yCols = 5;
     int yChls = wCount;
 
     int vStride = 1;
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 
     // padded convolutions
     auto Y3 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
-    UnrolledConvolutionChlMaj(WRowMaj.Data(), XChlMajImp.Data(), Y3.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+    PaddedConvolution(WRowMaj.Data(), XChlMajImp.Data(), Y3.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
     std::cout << Y3 << std::endl << std::endl;
 
 

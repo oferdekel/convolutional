@@ -212,19 +212,22 @@ void TensorConstInterface<ElementType, degree>::Print(std::ostream& stream) cons
     Print(stream, 0, index);
 }
 
+#include <iomanip> // TODO
+#include <cmath>
+
 template <typename ElementType, int degree>
 void TensorConstInterface<ElementType, degree>::Print(std::ostream& stream, int dimension, IntTuple<degree>& index) const
 {
     if(dimension == degree - 1)
     {
         stream << "{ ";
-        stream << (*this)(index);
+        stream << std::setw(5) << setiosflags(std::ios::fixed) << std::setprecision(2) << (*this)(index);
         int x = 5;
 
         for(int i = 1; i<_shape[dimension]; ++i)
         {
             Next(index);
-            stream << ", " << (*this)(index);
+            stream << ", " << std::setw(5) << setiosflags(std::ios::fixed) << std::setprecision(2) << (*this)(index);
         }
         Next(index);
         stream << " }";
@@ -238,7 +241,7 @@ void TensorConstInterface<ElementType, degree>::Print(std::ostream& stream, int 
             stream << ", ";
             if(degree == 2)
             {
-                stream << std::endl << "  ";
+                stream << std::endl << "   ";
             }
             Print(stream, dimension + 1, index);
         }
