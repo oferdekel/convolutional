@@ -96,3 +96,46 @@ void ImplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* 
     // matrix-matrix multiply
     Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), WRowMaj, 1, YRowMaj);
 }
+
+template <typename ElementType>
+void ExplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* XChlMaj, ElementType* YRowMajExp, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+{
+    assert(hStride == 1);
+    assert(vStride == 1);
+
+    int xRows = yRows + wRows - 1;
+    int xCols = yCols + wCols - 1;
+    int xChls = wChls;
+
+    int uRows = yRows * yCols + (yRows - 1) * (wCols - 1);
+    int uCols = wRows * wCols * wChls;
+
+    const ElementType* VColMaj = WRowMaj;
+    ElementType* ZRowMaj = YRowMajExp;
+
+    std::vector<ElementType> UColMaj(uRows * uCols);
+    int copySize = uRows;
+
+    // unroll input
+    for(int wRow = 0; wRow < wRows; ++wRow) 
+    {
+        for(int wCol = 0; wCol < wCols; ++wCol) 
+        {
+            for(int wChl = 0; wChl < wChls; ++wChl) 
+            {
+                // calculate copy source
+                const float* source = XChlMaj + (wChl * xRows + wRow) * xCols + wCol;
+
+                // calculate copy target
+                int uCol = (wRow * wCols + wCol) * wChls + wChl;
+                float* target = UColMaj.data() + uCol * copySize;
+
+                // copy from X to U
+                std::copy(source, source + copySize, target);
+            }  
+        }   
+    }   
+
+    // matrix-matrix multiply
+    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), WRowMaj, 1, YRowMajExp);
+}

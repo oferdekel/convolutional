@@ -23,8 +23,8 @@ int main(int argc, char** argv)
     int wChls = 2;
     int wCount = 3;
 
-    int yRows = 6;
-    int yCols = 5;
+    int yRows = 3;
+    int yCols = 3;
     int yChls = wCount;
 
     int vStride = 1;
@@ -69,21 +69,25 @@ int main(int argc, char** argv)
     // for loop convolution
     auto Y0 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
     ForLoopConvolution(WRowMaj.Data(), XRowMajExp.Data(), Y0.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
-    std::cout << Y0 << std::endl << std::endl;
+//    std::cout << Y0 << std::endl << std::endl;
 
     // unrolled convolutions
     auto Y1 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
     UnrolledConvolutionRowMaj(WRowMaj.Data(), XRowMajExp.Data(), Y1.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
-    std::cout << Y1 << std::endl << std::endl;
+//    std::cout << Y1 << std::endl << std::endl;
 
     auto Y2 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
     UnrolledConvolutionChlMaj(WRowMaj.Data(), XChlMajExp.Data(), Y2.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
-    std::cout << Y2 << std::endl << std::endl;
+//    std::cout << Y2 << std::endl << std::endl;
 
     // padded convolutions
     auto Y3 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
     ImplicitlyPaddedConvolution(WRowMaj.Data(), XChlMajImp.Data(), Y3.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
-    std::cout << Y3 << std::endl << std::endl;
+//    std::cout << Y3 << std::endl << std::endl;
+
+    auto Y4 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
+    ExplicitlyPaddedConvolution(WRowMaj.Data(), XChlMajExp.Data(), Y4.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+//    std::cout << Y4 << std::endl << std::endl;
 
     return 0;
 }
