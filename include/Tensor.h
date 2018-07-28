@@ -73,7 +73,7 @@ protected:
 
     // increments the index
     bool Next(IntTuple<degree>& index) const;
-    bool Next(IntTuple<degree>& index, IntTuple<degree> padding) const;
+    bool Next(IntTuple<degree>& index, IntTuple<degree> beginPadding, IntTuple<degree> endPadding) const;
 
     // checks if a tuple is a permutation of 0, 1, 2, ...
     static bool IsOrder(IntTuple<degree> order);
@@ -102,11 +102,11 @@ public:
     ElementType& operator()(IntTuple<degree> coordinate);
 
     // sets all tensor elements, other than the padding, to a given value
-    void Fill(ElementType value, IntTuple<degree> padding = {});
+    void Fill(ElementType value, IntTuple<degree> beginPadding = {}, IntTuple<degree> endPadding = {});
 
     // runs a generator for each element in the tensor, other than the padding
     template <typename GeneratorType>
-    void Generate(GeneratorType generator, IntTuple<degree> padding = {});
+    void Generate(GeneratorType generator, IntTuple<degree> beginPadding = {}, IntTuple<degree> endPadding = {});
 
     // Returns a pointer to the underlying contiguous data
     ElementType* Data() { return this->_pData; }
@@ -128,7 +128,7 @@ private:
 };
 
 template <typename ElementType, int degree, typename RandomEngineType>
-Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> padding = {});
+Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> beginPadding = {}, IntTuple<degree> endPadding = {});
 
 //
 // Matrix (degree 2 Tensors) abbreviations
@@ -283,19 +283,19 @@ bool TensorConstInterface<ElementType, degree>::Next(IntTuple<degree>& index) co
 }
 
 template <typename ElementType, int degree>
-bool TensorConstInterface<ElementType, degree>::Next(IntTuple<degree>& index, IntTuple<degree> padding) const
+bool TensorConstInterface<ElementType, degree>::Next(IntTuple<degree>& index, IntTuple<degree> beginPadding, IntTuple<degree> endPadding) const
 {
     int i = degree;
     while(i > 0)
     {
         --i;
         ++index[i];
-        if(index[i] + padding[i] < _shape[i])
+        if(index[i] + endPadding[i] < _shape[i])
         {
             return true;
         }
 
-        index[i] = padding[i];
+        index[i] = beginPadding[i];
     }
     return false;    
 }
@@ -347,21 +347,21 @@ ElementType& TensorInterface<ElementType, degree>::operator()(IntTuple<degree> c
 }
 
 template <typename ElementType, int degree>
-void TensorInterface<ElementType, degree>::Fill(ElementType value, IntTuple<degree> padding)
+void TensorInterface<ElementType, degree>::Fill(ElementType value, IntTuple<degree> beginPadding, IntTuple<degree> endPadding)
 {
-    Generate([&](){ return value; }, padding);
+    Generate([&](){ return value; }, beginPadding, endPadding);
 }
 
 template <typename ElementType, int degree>
 template <typename GeneratorType>
-void TensorInterface<ElementType, degree>::Generate(GeneratorType generator, IntTuple<degree> padding)
+void TensorInterface<ElementType, degree>::Generate(GeneratorType generator, IntTuple<degree> beginPadding, IntTuple<degree> endPadding)
 {
-    auto index = padding;
+    auto index = beginPadding;
     do
     {
         (*this)(index) = generator();
     }
-    while(this->Next(index, padding));
+    while(this->Next(index, beginPadding, endPadding));
 }
 
 template <typename ElementType, int degree>
@@ -372,14 +372,14 @@ Tensor<ElementType, degree>::Tensor(IntTuple<degree> shape, IntTuple<degree> ord
 }
 
 template <typename ElementType, int degree, typename RandomEngineType>
-Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> padding)
+Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> beginPadding, IntTuple<degree> endPadding)
 {
     // create standard normal random number generator
     std::normal_distribution<ElementType> normal(0, 1);
     auto rng = [&](){ return normal(engine);};
 
     Tensor<ElementType, degree> T(shape, order);
-    T.Generate(rng, padding);
+    T.Generate(rng, beginPadding, endPadding);
 
     return T;
 }

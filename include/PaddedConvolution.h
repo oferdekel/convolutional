@@ -98,7 +98,7 @@ void ImplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* 
 }
 
 template <typename ElementType>
-void ExplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* XChlMaj, ElementType* YRowMajExp, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+void ExplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* XChlMaj, ElementType* YRowMajExp, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols, int xPadTop, int xPadLeft)
 {
     assert(hStride == 1);
     assert(vStride == 1);
@@ -111,7 +111,7 @@ void ExplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* 
     int uCols = wRows * wCols * wChls;
 
     const ElementType* VColMaj = WRowMaj;
-    ElementType* ZRowMaj = YRowMajExp;
+    ElementType* ZRowMaj = YRowMajExp + (xCols * xPadTop + xPadLeft) * wCount;
 
     std::vector<ElementType> UColMaj(uRows * uCols);
     int copySize = uRows;
@@ -137,5 +137,13 @@ void ExplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* 
     }   
 
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), WRowMaj, 1, YRowMajExp);
+    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), WRowMaj, 1, ZRowMaj);
+
+    // delete the padding
+    int deleteSize = (wCols - 1) * wCount;
+    for(int yRow = 0; yRow < yRows - 1; ++yRow)
+    {
+        ElementType* begin = ZRowMaj + (yCols + xCols * yRow) * wCount;
+        std::fill(begin, begin + deleteSize, (ElementType)0);
+    }
 }

@@ -33,8 +33,7 @@ void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, int m, int n, i
 
     auto AMat = MatrixConstInterface<float>(A, { m, k }, orderA); 
 
-    std::cout << AMat << std::endl << std::endl;
-    return;
+//    std::cout << AMat << std::endl << std::endl;
     
     auto BMat = MatrixConstInterface<float>(B, { k, n }, orderB);
     auto CMat = MatrixInterface<float>(C, { m, n }, orderC);
