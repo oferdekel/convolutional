@@ -18,8 +18,8 @@
 int main(int argc, char** argv)
 {
     // filter shape
-    int wRows = 3;
-    int wCols = 3;
+    int wRows = 5;
+    int wCols = 5;
     int wChls = 2;
     int wCount = 3;
 
@@ -69,27 +69,62 @@ int main(int argc, char** argv)
     auto XChlMajImp = GetRandomTensor<float, 3>(engine, { yRows, yCols, xChls }, ChlMaj3Order);
 
     // for loop convolution
-    auto Y0 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
-    ForLoopConvolution(WRowMaj.Data(), XRowMajExp.Data(), Y0.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
-    std::cout << Y0 << std::endl << std::endl;
+    try
+    {
+        auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
+        ForLoopConvolution(WRowMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        std::cout << YRowMaj << std::endl << std::endl;
+    }
+    catch(std::invalid_argument e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 
     // unrolled convolutions
-    auto Y1 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
-    UnrolledConvolutionRowMaj(WRowMaj.Data(), XRowMajExp.Data(), Y1.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
-    std::cout << Y1 << std::endl << std::endl;
+    try
+    {
+        auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
+        UnrolledConvolutionRowMaj(WRowMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        std::cout << YRowMaj << std::endl << std::endl;
+    }
+    catch(std::invalid_argument e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 
-    auto Y2 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
-    UnrolledConvolutionChlMaj(WRowMaj.Data(), XChlMajExp.Data(), Y2.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
-    std::cout << Y2 << std::endl << std::endl;
+    try
+    {
+        auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
+        UnrolledConvolutionChlMaj(WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        std::cout << YRowMaj << std::endl << std::endl;
+    }
+    catch(std::invalid_argument e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 
     // padded convolutions
-    auto Y3 = Tensor<float,3> ({ yRows, yCols, yChls }, RowMaj3Order);
-    ImplicitlyPaddedConvolution(WRowMaj.Data(), XChlMajImp.Data(), Y3.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
-    std::cout << Y3 << std::endl << std::endl;
+    try
+    {
+        auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
+        ImplicitlyPaddedConvolution(WRowMaj.Data(), XChlMajImp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        std::cout << YRowMaj << std::endl << std::endl;
+    }
+    catch(std::invalid_argument e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 
-    auto Y4 = Tensor<float,3> ({ xRows, xCols, yChls }, RowMaj3Order);
-    ExplicitlyPaddedConvolution(WRowMaj.Data(), XChlMajExp.Data(), Y4.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
-    std::cout << Y4 << std::endl << std::endl;
+    try
+    {
+        auto YRowMaj = Tensor<float,3> ({ xRows, xCols, yChls }, RowMaj3Order);
+        ExplicitlyPaddedConvolution(WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
+        std::cout << YRowMaj << std::endl << std::endl;
+    }
+    catch(std::invalid_argument e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 
     return 0;
 }

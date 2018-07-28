@@ -10,6 +10,7 @@
 #include "Tensor.h"
 
 #include <string>
+#include <exception>
 
 template <typename ElementType>
 void StructuredDelete(ElementType* begin, int skip, int singles, int size,  int intervals)
@@ -36,10 +37,14 @@ void StructuredDelete(ElementType* begin, int skip, int singles, int size,  int 
 template <typename ElementType>
 void ImplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* XChlMajImp, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
 {
-    assert(hStride == 1);
-    assert(vStride == 1);
-    assert(wRows == 3);
-    assert(wCols == 3);
+    if (hStride != 1 || vStride != 1)
+    {
+        throw std::invalid_argument("Implicitly Padded Convolution requires hStride = 1 and vStride = 1");
+    }
+    if (wRows != 3 || wCols != 3)
+    {
+        throw std::invalid_argument("This implementation of Implicitly Padded Convolution is hard-coded for wRows = 3 and wCols = 3");
+    }
 
     // allocate U matrix to hold unrolled input
     int uRows = yRows * yCols;
