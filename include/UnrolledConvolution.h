@@ -57,7 +57,10 @@ void UnrolledConvolutionRowMaj(const ElementType* WRowMaj, const ElementType* XR
 template <typename ElementType>
 void UnrolledConvolutionChlMaj(const ElementType* WRowMaj, const ElementType* XChlMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
 {
-    assert(hStride == 1);
+    if (hStride != 1)
+    {
+        throw std::invalid_argument("Unrolled Convolution requires hStride = 1");
+    }
 
     int xRows = (yRows - 1) * vStride + wRows;
     int xCols = yCols + wCols - 1;
@@ -97,4 +100,10 @@ void UnrolledConvolutionChlMaj(const ElementType* WRowMaj, const ElementType* XC
 
     // matrix-matrix multiply
     Gemm(false, false, true, uRows, vCols, uCols, 1, UColMaj.data(), VColMaj, 1, ZRowMaj);
+}
+
+template <typename ElementType>
+void UnrolledOutputConvolutionRowMaj(const ElementType* WRowMaj, const ElementType* XChlMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+{
+    throw std::invalid_argument("Not yet implemented");
 }

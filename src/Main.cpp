@@ -99,6 +99,13 @@ int main(int argc, char** argv)
         return YRowMaj;
     });
 
+    RunTest([&]() -> Tensor<float,3>
+    {
+        auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
+        UnrolledOutputConvolutionRowMaj(WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        return YRowMaj;
+    });
+
     // padded convolutions
     RunTest([&]() -> Tensor<float,3>
     {

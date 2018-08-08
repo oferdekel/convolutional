@@ -105,8 +105,10 @@ void ImplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* 
 template <typename ElementType>
 void ExplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* XChlMaj, ElementType* YRowMajExp, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols, int xPadTop, int xPadLeft)
 {
-    assert(hStride == 1);
-    assert(vStride == 1);
+    if (hStride != 1 || vStride != 1)
+    {
+        throw std::invalid_argument("Implicitly Padded Convolution requires hStride = 1 and vStride = 1");
+    }
 
     int xRows = yRows + wRows - 1;
     int xCols = yCols + wCols - 1;

@@ -10,7 +10,6 @@
 
 #include <iostream>
 
-
 void RunTest(TestType test)
 {
     try
