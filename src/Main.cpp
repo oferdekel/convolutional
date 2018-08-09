@@ -12,6 +12,7 @@
 #include "BlasHelpers.h"
 #include "ForLoopConvolution.h"
 #include "PaddedConvolution.h"
+#include "PartiallyUnrolledConvolution.h"
 #include "UnrolledConvolution.h"
 #include "Tensor.h"
 #include "TestHelpers.h"
@@ -118,6 +119,15 @@ int main(int argc, char** argv)
     {
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
         ExplicitlyPaddedConvolution(WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
+        return YRowMaj;
+    });
+
+    // partially unrolled convolutions
+
+    RunTest([&]() -> Tensor<float,3>
+    {
+        auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
+        PartiallyUnrolledConvolutionRowMaj(WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;
     });
 
