@@ -19,6 +19,6 @@ void RunTest(TestType test)
     }
     catch(std::invalid_argument e)
     {
-        std::cerr << e.what() << std::endl;
+        std::cerr << e.what() << std::endl << std::endl;
     }
 }

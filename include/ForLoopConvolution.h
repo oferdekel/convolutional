@@ -8,8 +8,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include "ConvolutionProperties.h"
+
 template <typename ElementType>
-void ForLoopConvolution(const ElementType* WRowMaj, const ElementType* XRowMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+void Convolution(ConvolutionProperties<None>,
+    const ElementType* WRowMaj, const ElementType* XRowMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
 {
     int yChls = wCount;
     int xRows = (yRows - 1) * vStride + wRows;

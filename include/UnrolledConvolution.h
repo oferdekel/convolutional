@@ -7,12 +7,24 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "BlasHelpers.h"
+#include "ConvolutionProperties.h"
 #include "Tensor.h"
 
 #include <vector> // std::vector
 
 template <typename ElementType>
-void UnrolledConvolutionRowMaj(const ElementType* WRowMaj, const ElementType* XRowMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledInput>,
+    const ElementType* WRowMaj, 
+    const ElementType* XRowMaj, 
+    ElementType* YRowMaj, 
+    int wCount, 
+    int wRows, 
+    int wCols, 
+    int wChls, 
+    int vStride, 
+    int hStride, 
+    int yRows, 
+    int yCols)
 {
     int xRows = (yRows - 1) * vStride + wRows;
     int xCols = (yCols - 1) * hStride + wCols;
@@ -55,7 +67,18 @@ void UnrolledConvolutionRowMaj(const ElementType* WRowMaj, const ElementType* XR
 }
 
 template <typename ElementType>
-void UnrolledConvolutionChlMaj(const ElementType* WRowMaj, const ElementType* XChlMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+void Convolution(ConvolutionProperties<ChannelMajorInput, RowMajorOutput, UnrolledInput>,
+    const ElementType* WRowMaj, 
+    const ElementType* XChlMaj, 
+    ElementType* YRowMaj, 
+    int wCount, 
+    int wRows, 
+    int wCols, 
+    int wChls, 
+    int vStride, 
+    int hStride, 
+    int yRows, 
+    int yCols)
 {
     if (hStride != 1)
     {
@@ -103,7 +126,8 @@ void UnrolledConvolutionChlMaj(const ElementType* WRowMaj, const ElementType* XC
 }
 
 template <typename ElementType>
-void UnrolledOutputConvolutionRowMaj(const ElementType* WRowMaj, const ElementType* XChlMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledOutput>,
+    const ElementType* WRowMaj, const ElementType* XChlMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
 {
     throw std::invalid_argument("Not yet implemented");
 }

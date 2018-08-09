@@ -7,6 +7,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "BlasHelpers.h"
+#include "ConvolutionProperties.h"
 #include "Tensor.h"
 
 #include <string>
@@ -35,7 +36,18 @@ void StructuredDelete(ElementType* begin, int skip, int singles, int size,  int 
 }
 
 template <typename ElementType>
-void ImplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* XChlMajImp, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+void Convolution(ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, RowMajorOutput>,
+    const ElementType* WRowMaj, 
+    const ElementType* XChlMajImp, 
+    ElementType* YRowMaj, 
+    int wCount, 
+    int wRows, 
+    int wCols, 
+    int wChls, 
+    int vStride, 
+    int hStride, 
+    int yRows, 
+    int yCols)
 {
     if (hStride != 1 || vStride != 1)
     {
@@ -103,7 +115,20 @@ void ImplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* 
 }
 
 template <typename ElementType>
-void ExplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* XChlMaj, ElementType* YRowMajExp, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols, int xPadTop, int xPadLeft)
+void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, RowMajorOutput>, 
+    const ElementType* WRowMaj, 
+    const ElementType* XChlMaj, 
+    ElementType* YRowMajExp, 
+    int wCount, 
+    int wRows, 
+    int wCols, 
+    int wChls, 
+    int vStride, 
+    int hStride, 
+    int yRows, 
+    int yCols, 
+    int xPadTop, 
+    int xPadLeft)
 {
     if (hStride != 1 || vStride != 1)
     {
@@ -153,4 +178,23 @@ void ExplicitlyPaddedConvolution(const ElementType* WRowMaj, const ElementType* 
         ElementType* begin = ZRowMaj + (yCols + xCols * yRow) * wCount;
         std::fill(begin, begin + deleteSize, (ElementType)0);
     }
+}
+
+template <typename ElementType>
+void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, RowMajorOutput>, 
+    const ElementType* WRowMaj, 
+    const ElementType* XChlMaj, 
+    ElementType* YRowMajExp, 
+    int wCount, 
+    int wRows, 
+    int wCols, 
+    int wChls, 
+    int vStride, 
+    int hStride, 
+    int yRows, 
+    int yCols, 
+    int xPadTop, 
+    int xPadLeft)
+{
+        throw std::invalid_argument("Not yet implemented");  
 }
