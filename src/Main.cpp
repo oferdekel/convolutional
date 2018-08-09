@@ -134,7 +134,15 @@ int main(int argc, char** argv)
 
     RunTest([&]() -> Tensor<float,3>
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, PartiallyUnrolledInput, ChannelMajorOutput>{};
+        auto properties = ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>{};
+        auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
+        Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        return YRowMaj;
+    });
+
+    RunTest([&]() -> Tensor<float,3>
+    {
+        auto properties = ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
         Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;
