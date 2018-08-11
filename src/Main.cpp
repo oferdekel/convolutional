@@ -74,7 +74,7 @@ int main(int argc, char** argv)
     // for loop convolution
     RunTest([&]() -> Tensor<float,3>
     {
-        auto properties = ConvolutionProperties<None>{};
+        auto properties = ConvolutionProperties<RowMajorInput, RowMajorOutput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
         Convolution(properties, WRowMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;

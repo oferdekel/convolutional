@@ -10,9 +10,30 @@
 
 #include "ConvolutionProperties.h"
 
+// W - 4-dimensional weights tensor in row major order
+// X - 3-dimensional input tensor in row major order
+// Y - 3-dimensional output tensor in row major order
+// wCount - number of filters in W
+// wRows - number of rows in each filter in W
+// wCols - number of columns in each filter in W
+// wChls - number of channels in each filter in W
+// vStride - vertical stride
+// hStride - horizontal stride
+// yRows - number of rows in the output tensor Y
+// yCols - number of columns in the output tensor Y
 template <typename ElementType>
-void Convolution(ConvolutionProperties<None>,
-    const ElementType* WRowMaj, const ElementType* XRowMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput>,
+    const ElementType* W, 
+    const ElementType* X, 
+    ElementType* Y, 
+    int wCount, 
+    int wRows, 
+    int wCols, 
+    int wChls, 
+    int vStride, 
+    int hStride, 
+    int yRows, 
+    int yCols)
 {
     int yChls = wCount;
     int xRows = (yRows - 1) * vStride + wRows;
@@ -32,19 +53,19 @@ void Convolution(ConvolutionProperties<None>,
                     {
                         for (int wChl = 0; wChl < wChls; ++wChl)
                         {
-                            auto weight = *(WRowMaj + ((yChl * wRows + wRow) * wCols + wCol) * wChls + wChl);
+                            auto weight = *(W + ((yChl * wRows + wRow) * wCols + wCol) * wChls + wChl);
 
                             auto xRow = yRow * vStride + wRow;
                             auto xCol = yCol * hStride + wCol;
                             auto xChl = wChl;
-                            auto input = *(XRowMaj + (xRow * xCols + xCol) * xChls + xChl);
+                            auto input = *(X + (xRow * xCols + xCol) * xChls + xChl);
 
                             output += weight * input;
                         }
                     }
                 }
 
-                *(YRowMaj + (yRow * yCols + yCol) * yChls + yChl) = output;
+                *(Y + (yRow * yCols + yCol) * yChls + yChl) = output;
             }
         }
     }
