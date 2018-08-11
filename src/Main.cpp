@@ -108,7 +108,7 @@ int main(int argc, char** argv)
     // padded convolutions
     RunTest([&]() -> Tensor<float,3>
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, RowMajorOutput>{};
+        auto properties = ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
         Convolution(properties, WRowMaj.Data(), XChlMajImp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 
     RunTest([&]() -> Tensor<float,3>
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, RowMajorOutput>{};
+        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
         Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
         return YRowMaj;
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 
     RunTest([&]() -> Tensor<float,3>
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, RowMajorOutput>{};
+        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
         Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
         return YRowMaj;

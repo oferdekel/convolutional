@@ -10,13 +10,27 @@
 #include "ConvolutionProperties.h"
 #include "Tensor.h"
 
-#include <vector> // std::vector
+#include <vector>
 
+// Unrolled-input convolution with row-major input tensor and row-major output tensor 
+//
+// W - 4-dimensional weights tensor in row-major order
+// X - 3-dimensional input tensor in row-major order
+// Y - 3-dimensional output tensor in row-major order
+// wCount - number of filters in W
+// wRows - number of rows in each filter in W
+// wCols - number of columns in each filter in W
+// wChls - number of channels in each filter in W
+// vStride - vertical stride
+// hStride - horizontal stride
+// yRows - number of rows in the output tensor Y
+// yCols - number of columns in the output tensor Y
+//
 template <typename ElementType>
 void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledInput>,
-    const ElementType* WRowMaj, 
-    const ElementType* XRowMaj, 
-    ElementType* YRowMaj, 
+    const ElementType* W, 
+    const ElementType* X, 
+    ElementType* Y, 
     int wCount, 
     int wRows, 
     int wCols, 
@@ -34,8 +48,8 @@ void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledIn
     int uCols = wRows * wCols * wChls;
     int vCols = wCount;
 
-    const ElementType* VColMaj = WRowMaj;
-    ElementType* ZRowMaj = YRowMaj;
+    const ElementType* VColMaj = W;
+    ElementType* ZRowMaj = Y;
 
     std::vector<ElementType> URowMaj(uRows * uCols);
     int copySize = wCols * wChls;
@@ -50,7 +64,7 @@ void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledIn
                 // calculate copy source
                 int xRow = yRow * vStride + wRow;
                 int xCol = yCol * hStride;
-                const float* source = XRowMaj + (xRow * xCols + xCol) * xChls;
+                const float* source = X + (xRow * xCols + xCol) * xChls;
 
                 // calculate copy target
                 int uRow = yRow * yCols + yCol;
@@ -66,11 +80,25 @@ void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledIn
     Gemm(true, false, true, uRows, vCols, uCols, 1, URowMaj.data(), VColMaj, 1, ZRowMaj);
 }
 
+// Unrolled-input convolution with channel-major input tensor and row-major output tensor 
+//
+// W - 4-dimensional weights tensor in row-major order
+// X - 3-dimensional input tensor in channel-major order
+// Y - 3-dimensional output tensor in row-major order
+// wCount - number of filters in W
+// wRows - number of rows in each filter in W
+// wCols - number of columns in each filter in W
+// wChls - number of channels in each filter in W
+// vStride - vertical stride
+// hStride - horizontal stride
+// yRows - number of rows in the output tensor Y
+// yCols - number of columns in the output tensor Y
+//
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ChannelMajorInput, RowMajorOutput, UnrolledInput>,
-    const ElementType* WRowMaj, 
-    const ElementType* XChlMaj, 
-    ElementType* YRowMaj, 
+    const ElementType* W, 
+    const ElementType* X, 
+    ElementType* Y, 
     int wCount, 
     int wRows, 
     int wCols, 
@@ -92,8 +120,8 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, RowMajorOutput, Unroll
     int uCols = wRows * wCols * wChls;
     int vCols = wCount;
 
-    const ElementType* VColMaj = WRowMaj;
-    ElementType* ZRowMaj = YRowMaj;
+    const ElementType* VColMaj = W;
+    ElementType* ZRowMaj = Y;
 
     std::vector<ElementType> UColMaj(uRows * uCols);
     int copySize = yCols;
@@ -108,7 +136,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, RowMajorOutput, Unroll
                     int xRow = yRow * vStride + wRow;
                     int xCol = wCol;
                     int xChl = wChl;
-                    const float* source = XChlMaj + (xChl * xRows + xRow) * xCols + xCol;
+                    const float* source = X + (xChl * xRows + xRow) * xCols + xCol;
                     
                     // calculate copy target
                     int uCol =  (wRow * wCols + wCol) * wChls + wChl;
@@ -125,9 +153,23 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, RowMajorOutput, Unroll
     Gemm(false, false, true, uRows, vCols, uCols, 1, UColMaj.data(), VColMaj, 1, ZRowMaj);
 }
 
+// Unrolled-output convolution with row-major input tensor and row-major output tensor 
+//
+// W - 4-dimensional weights tensor in row-major order
+// X - 3-dimensional input tensor in row-major order
+// Y - 3-dimensional output tensor in row-major order
+// wCount - number of filters in W
+// wRows - number of rows in each filter in W
+// wCols - number of columns in each filter in W
+// wChls - number of channels in each filter in W
+// vStride - vertical stride
+// hStride - horizontal stride
+// yRows - number of rows in the output tensor Y
+// yCols - number of columns in the output tensor Y
+//
 template <typename ElementType>
 void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledOutput>,
-    const ElementType* WRowMaj, const ElementType* XChlMaj, ElementType* YRowMaj, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+    const ElementType* W, const ElementType* X, ElementType* Y, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
 {
     throw std::invalid_argument("Not yet implemented");
 }

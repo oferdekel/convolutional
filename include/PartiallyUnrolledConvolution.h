@@ -11,9 +11,9 @@
 
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>, 
-    const ElementType* WRowMaj, 
-    const ElementType* XRowMaj, 
-    ElementType* YRowMaj, 
+    const ElementType* W, 
+    const ElementType* X, 
+    ElementType* Y, 
     int wCount, 
     int wRows, 
     int wCols, 
@@ -28,9 +28,9 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
 
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>, 
-    const ElementType* WRowMaj, 
-    const ElementType* XRowMaj, 
-    ElementType* YRowMaj, 
+    const ElementType* W, 
+    const ElementType* X, 
+    ElementType* Y, 
     int wCount, 
     int wRows, 
     int wCols, 

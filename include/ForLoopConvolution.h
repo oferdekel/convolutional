@@ -10,9 +10,11 @@
 
 #include "ConvolutionProperties.h"
 
-// W - 4-dimensional weights tensor in row major order
-// X - 3-dimensional input tensor in row major order
-// Y - 3-dimensional output tensor in row major order
+// For-loop implementation of 2D tensor convolution 
+//
+// W - 4-dimensional weights tensor in row-major order
+// X - 3-dimensional input tensor in row-major order
+// Y - 3-dimensional output tensor in row-major order
 // wCount - number of filters in W
 // wRows - number of rows in each filter in W
 // wCols - number of columns in each filter in W
@@ -21,6 +23,7 @@
 // hStride - horizontal stride
 // yRows - number of rows in the output tensor Y
 // yCols - number of columns in the output tensor Y
+//
 template <typename ElementType>
 void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput>,
     const ElementType* W, 
