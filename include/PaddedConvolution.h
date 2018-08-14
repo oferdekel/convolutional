@@ -165,6 +165,10 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
     {
         throw std::invalid_argument("Implicitly Padded Convolution requires hStride = 1 and vStride = 1");
     }
+    if (yPadTop * 2 + 1 != wRows || yPadLeft * 2 + 1 != wCols)
+    {
+        throw std::invalid_argument("yPapTop and yPadLeft must be consistent with wRows and wCols");
+    }
 
     int xRows = yRows + wRows - 1;
     int xCols = yCols + wCols - 1;
@@ -211,6 +215,35 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
     }
 }
 
+
+int GetDistToContent(int xRow, int xCol, int xRows, int xCols, int xPadTop, int xPadLeft)
+{
+    if(xRow < xPadTop)
+    {
+        return (xPadTop - xRow) * xCols + xPadLeft - xCol;
+    }
+    if(xCol < xPadLeft)
+    {
+        return xPadLeft - xCol;
+    }
+    return 0;
+}
+
+int GetDistFromContent(int xRow, int xCol, int xRows, int xCols, int xPadBottom, int xPadRight)
+{
+    int firstBottomPadRow = xRows - xPadBottom;
+    if(xRow >= firstBottomPadRow)
+    {
+        return (xRow - firstBottomPadRow) * xCols + xPadRight + xCol + 1;
+    }
+    int firstRightPadCol = xCols - xPadRight;
+    if(xCol >= firstRightPadCol)
+    {
+        return xCol - firstRightPadCol + 1;
+    }
+    return 0;
+}
+
 // Unrolled-input convolution with implicit input padding, with channel-major input tensor and row-major output tensor 
 //
 // W - 4-dimensional weights tensor in row-major order
@@ -240,8 +273,65 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     int hStride, 
     int yRows, 
     int yCols, 
+    int xPadTop,
+    int xPadLeft,
     int yPadTop, 
     int yPadLeft)
 {
-        throw std::invalid_argument("Not yet implemented");  
+    if (hStride != 1 || vStride != 1)
+    {
+        throw std::invalid_argument("Implicitly Padded Convolution requires hStride = 1 and vStride = 1");
+    }
+    if (yPadTop * 2 + 1 != wRows || yPadLeft * 2 + 1 != wCols)
+    {
+        throw std::invalid_argument("yPapTop and yPadLeft must be consistent with wRows and wCols");
+    }
+
+    int xRows = yRows + wRows - 1;
+    int xCols = yCols + wCols - 1;
+    int xChls = wChls;
+
+    int uRows = yRows * yCols + (yRows - 1) * (wCols - 1);
+    int uCols = wRows * wCols * wChls;
+
+    const ElementType* VColMaj = W;
+    ElementType* ZRowMaj = Y + (xCols * yPadTop + yPadLeft) * wCount;
+
+    std::vector<ElementType> UColMaj(uRows * uCols);
+    int copySize = uRows;
+
+    // unroll input
+    for(int wRow = 0; wRow < wRows; ++wRow) 
+    {
+        for(int wCol = 0; wCol < wCols; ++wCol) 
+        {
+            // get distances
+            int distToContent = GetDistToContent(wRow, wCol, xRows, xCols, xPadTop, xPadLeft);
+            int distFromContent = GetDistFromContent(wRow, wCol, xRows, xCols, xPadTop, xPadLeft);
+
+            for(int wChl = 0; wChl < wChls; ++wChl) 
+            {
+                // calculate copy source
+                const float* source = X + (wChl * xRows + wRow) * xCols + wCol;
+
+                // calculate copy target
+                int uCol = (wRow * wCols + wCol) * wChls + wChl;
+                float* target = UColMaj.data() + uCol * copySize;
+
+                // copy from X to U
+                std::copy(source + distToContent, source + copySize - distFromContent, target + distToContent);
+            }  
+        }   
+    }   
+
+    // matrix-matrix multiply
+    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), W, 1, ZRowMaj);
+
+    // delete the padding
+    int deleteSize = (wCols - 1) * wCount;
+    for(int yRow = 0; yRow < yRows - 1; ++yRow)
+    {
+        ElementType* begin = ZRowMaj + (yCols + xCols * yRow) * wCount;
+        std::fill(begin, begin + deleteSize, (ElementType)0);
+    }
 }
