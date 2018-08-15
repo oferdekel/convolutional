@@ -73,7 +73,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, 
         throw std::invalid_argument("This implementation of Implicitly Padded Convolution is hard-coded for wRows = 3 and wCols = 3");
     }
 
-    // allocate U matrix to hold unrolled input
+    // allocate a column-major matrix U to hold unrolled input
     int uRows = yRows * yCols;
     int uCols = 9 * wChls;
     std::vector<ElementType> UColMaj(uRows * uCols);

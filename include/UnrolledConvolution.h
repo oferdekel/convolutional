@@ -51,6 +51,7 @@ void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledIn
     const ElementType* VColMaj = W;
     ElementType* ZRowMaj = Y;
 
+    // allocate a column-major matrix U to hold unrolled input
     std::vector<ElementType> URowMaj(uRows * uCols);
     int copySize = wCols * wChls;
 
@@ -123,6 +124,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, RowMajorOutput, Unroll
     const ElementType* VColMaj = W;
     ElementType* ZRowMaj = Y;
 
+    // allocate a column-major matrix U to hold unrolled input
     std::vector<ElementType> UColMaj(uRows * uCols);
     int copySize = yCols;
 
