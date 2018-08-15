@@ -171,5 +171,53 @@ template <typename ElementType>
 void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledOutput>,
     const ElementType* W, const ElementType* X, ElementType* Y, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
 {
-    throw std::invalid_argument("Not yet implemented");
+    //throw std::invalid_argument("Not yet implemented");
+
+    int xRows = (yRows - 1) * vStride + wRows;
+    int xCols = yCols + wCols - 1;
+
+    int uRows = xRows * xCols;
+    int uCols = wChls;
+    int vCols = wCount * wRows * wCols;
+
+
+    // matrix-matrix multiply
+    std::vector<ElementType> UColMaj(uRows * vCols);
+    Gemm(true, false, false, uRows, vCols, uCols, 1, X, W, 1, UColMaj.data());
+
+    int uBlockRow = 1;
+    int uBlockCol = 2;
+
+
+    // collect values from the unrolled output
+    for(int yRow = 0; yRow < yRows; ++yRow) {
+
+
+    for(int wRow = 0; wRow < wRows; ++wRow) {
+        for(int wCol = 0; wCol < wCols; ++wCol) {
+            for(int wChl = 0; wChl < wChls; ++wChl) {
+
+                    // calculate copy source
+                    int xRow = yRow * vStride + wRow;
+                    int xCol = wCol;
+                    int xChl = wChl;
+                    const float* source = X + (xChl * xRows + xRow) * xCols + xCol;
+                    
+                    // calculate copy target
+                    int uCol =  (wRow * wCols + wCol) * wChls + wChl;
+                    ElementType* target = UColMaj.data() + (uCol * yRows + yRow) * yCols;
+
+                    // copy from X to U
+                    std::copy(source, source + copySize, target);
+                }   
+            }  
+        }   
+    }   
+
+
+
+
+    MatrixConstInterface<float> T(ZColMaj.data(), {uRows, vCols}, ColMaj2Order);
+    std::cout << T << std::endl;
+
 }
