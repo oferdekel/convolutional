@@ -72,6 +72,7 @@ int main(int argc, char** argv)
     auto XChlMajImp = GetRandomTensor<float, 3>(engine, { yRows, yCols, xChls }, ChlMaj3Order);
 
     // for loop convolution
+    std::cout << "for loop convolution" << std::endl;
     RunTest([&]() -> Tensor<float,3>
     {
         auto properties = ConvolutionProperties<RowMajorInput, RowMajorOutput>{};
@@ -81,6 +82,7 @@ int main(int argc, char** argv)
     });
 
     // unrolled convolutions
+    std::cout << "unrolled convolutions" << std::endl;
     RunTest([&]() -> Tensor<float,3>
     {
         auto properties = ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledInput>{};
@@ -106,6 +108,7 @@ int main(int argc, char** argv)
     });
 
     // padded convolutions
+    std::cout << "padded convolutions" << std::endl;
     RunTest([&]() -> Tensor<float,3>
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, RowMajorOutput, UnrolledInput>{};
@@ -126,12 +129,12 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
+        Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft, xPadTop, xPadLeft);
         return YRowMaj;
     });
 
     // partially unrolled convolutions
-
+    std::cout << "partially unrolled convolutions" << std::endl;
     RunTest([&]() -> Tensor<float,3>
     {
         auto properties = ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>{};

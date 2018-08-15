@@ -34,3 +34,6 @@
 # CMake
 build_vs
 build_gcc
+
+# VSCode
+.vscode
