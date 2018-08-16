@@ -14,7 +14,7 @@
 
 // Unrolled-input convolution with row-major input tensor and row-major output tensor 
 //
-// W - 4-dimensional weights tensor in row-major order
+// W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in row-major order
 // Y - 3-dimensional output tensor in row-major order
 // wCount - number of filters in W
@@ -83,7 +83,7 @@ void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledIn
 
 // Unrolled-input convolution with channel-major input tensor and row-major output tensor 
 //
-// W - 4-dimensional weights tensor in row-major order
+// W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in channel-major order
 // Y - 3-dimensional output tensor in row-major order
 // wCount - number of filters in W
@@ -157,7 +157,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, RowMajorOutput, Unroll
 
 // Unrolled-output convolution with row-major input tensor and row-major output tensor 
 //
-// W - 4-dimensional weights tensor in row-major order
+// W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in row-major order
 // Y - 3-dimensional output tensor in row-major order
 // wCount - number of filters in W
@@ -210,7 +210,7 @@ void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledOu
                     ElementType* target = UColMaj.data() + (uCol * yRows + yRow) * yCols;
 
                     // copy from X to U
-                    std::copy(source, source + copySize, target);
+                  //  std::copy(source, source + copySize, target);
                 }   
             }  
         }   
@@ -219,7 +219,7 @@ void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledOu
 
 
 
-    MatrixConstInterface<float> T(ZColMaj.data(), {uRows, vCols}, ColMaj2Order);
-    std::cout << T << std::endl;
+    //MatrixConstInterface<float> T(ZColMaj.data(), {uRows, vCols}, ColMaj2Order);
+    //std::cout << T << std::endl;
 
 }

@@ -12,7 +12,7 @@
 
 // For-loop implementation of 2D tensor convolution 
 //
-// W - 4-dimensional weights tensor in row-major order
+// W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in row-major order
 // Y - 3-dimensional output tensor in row-major order
 // wCount - number of filters in W

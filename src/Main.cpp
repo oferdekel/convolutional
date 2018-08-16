@@ -53,18 +53,31 @@ int main(int argc, char** argv)
 
     // generate random filters in two memory orders
     engine.seed(seed1);
-    auto WRowMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, RowMaj4Order);
-
-    auto xx = GetMatrix<float>({{1,1},{1,1}});
-    auto yy = GetTensor3<float>(
-        { {{1, 1},{1, 1}},
-          {{2, 2},{2, 2}},
-          {{3, 3},{3, 3}} });
+    auto WFilMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, {3, 2, 1, 0});
+    // GetTensor4<float>(
+    //   { { { {1, 1}, {1, 1}, {1, 1} },
+    //       { {2, 2}, {2, 2}, {2, 2} },
+    //       { {3, 3}, {3, 3}, {3, 3} } },
+    //     { { {1, 1}, {1, 1}, {1, 1} },
+    //       { {2, 2}, {2, 2}, {2, 2} },
+    //       { {3, 3}, {3, 3}, {3, 3} } },
+    //     { { {1, 1}, {1, 1}, {1, 1} },
+    //       { {2, 2}, {2, 2}, {2, 2} },
+    //       { {3, 3}, {3, 3}, {3, 3} } } });
  
-    std::cout << yy << std::endl;
-
     engine.seed(seed1);
-    auto WChlMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, ChlMaj4Order);
+    auto WRowMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, {0, 3, 2, 1});
+    // GetTensor4<float>(
+    //   { { { {1, 1}, {1, 1}, {1, 1} },
+    //       { {2, 2}, {2, 2}, {2, 2} },
+    //       { {3, 3}, {3, 3}, {3, 3} } },
+    //     { { {1, 1}, {1, 1}, {1, 1} },
+    //       { {2, 2}, {2, 2}, {2, 2} },
+    //       { {3, 3}, {3, 3}, {3, 3} } },
+    //     { { {1, 1}, {1, 1}, {1, 1} },
+    //       { {2, 2}, {2, 2}, {2, 2} },
+    //       { {3, 3}, {3, 3}, {3, 3} } } }, 
+    //       {0, 3, 2, 1});
  
     // generate random input in both row-major and channel-major orders, and with both explicit and implicit zero-padding
     engine.seed(seed2);
@@ -75,6 +88,10 @@ int main(int argc, char** argv)
 
     engine.seed(seed2);
     auto XRowMajImp = GetRandomTensor<float, 3>(engine, { yRows, yCols, xChls }, RowMaj3Order);
+    //   GetTensor3<float>(
+        // { { {1, 1}, {1, 1}, {1, 1} },
+        //   { {2, 2}, {2, 2}, {2, 2} },
+        //   { {3, 3}, {3, 3}, {3, 3} } });
 
     engine.seed(seed2);
     auto XChlMajImp = GetRandomTensor<float, 3>(engine, { yRows, yCols, xChls }, ChlMaj3Order);
@@ -85,7 +102,7 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<RowMajorInput, RowMajorOutput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        Convolution(properties, WFilMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;
     });
 
@@ -95,7 +112,7 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        Convolution(properties, WFilMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;
     });
 
@@ -103,7 +120,7 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;
     });
 
@@ -111,7 +128,7 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledOutput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;
     });
 
@@ -121,7 +138,7 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XChlMajImp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        Convolution(properties, WFilMaj.Data(), XChlMajImp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;
     });
 
@@ -129,7 +146,7 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
+        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
         return YRowMaj;
     });
 
@@ -137,7 +154,7 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft, xPadTop, xPadLeft);
+        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft, xPadTop, xPadLeft);
         return YRowMaj;
     });
 
@@ -147,7 +164,7 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        Convolution(properties, WRowMaj.Data(), XRowMajImp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;
     });
 
@@ -155,7 +172,7 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;
     });
 

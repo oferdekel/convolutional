@@ -38,7 +38,7 @@ void StructuredDelete(ElementType* begin, int skip, int singles, int size,  int 
 
 // Unrolled-input convolution with implicit input padding, with 3x3 filters. Assumes a channel-major input tensor with an implicit row of zero-padding on the top/bottom and a column of zero-padding on the right/left, and a row-major output tensor.
 //
-// W - 4-dimensional weights tensor in row-major order, which represents 3x3 filters 
+// W - 4-dimensional weights tensor in filter-major order, which represents 3x3 filters 
 // X - 3-dimensional input tensor in channel-major order with implicit zero-padding
 // Y - 3-dimensional output tensor in row-major order
 // wCount - number of filters in W
@@ -131,7 +131,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, 
 
 // Unrolled-input convolution with implicit input padding, with channel-major input tensor and row-major output tensor 
 //
-// W - 4-dimensional weights tensor in row-major order
+// W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in channel-major order
 // Y - 3-dimensional zero-padded output tensor in row-major order
 // wCount - number of filters in W
@@ -246,7 +246,7 @@ int GetDistFromContent(int xRow, int xCol, int xRows, int xCols, int xPadBottom,
 
 // Unrolled-input convolution with implicit input padding, with channel-major input tensor and row-major output tensor 
 //
-// W - 4-dimensional weights tensor in row-major order
+// W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in channel-major order
 // Y - 3-dimensional output tensor in row-major order
 // wCount - number of filters in W

@@ -28,8 +28,6 @@ const TensorOrder2 RowMaj2Order = { 1, 0 };
 const TensorOrder2 ColMaj2Order = { 0, 1 };
 const TensorOrder3 RowMaj3Order = { 2, 1, 0 };
 const TensorOrder3 ChlMaj3Order = { 1, 0, 2 };
-const TensorOrder4 RowMaj4Order = {3, 2, 1, 0};
-const TensorOrder4 ChlMaj4Order = {2, 1, 3, 0};
 
 //
 // A Tensor is a multi-dimensional array, which can be represented in memory in different orders. A TensorConstInterface defines all of the const methods of a tensor. A TensorConstInterface does not own allocate its own memory.
@@ -179,23 +177,48 @@ template <typename ElementType>
 Tensor<ElementType, 3> GetTensor3(list<list<list<ElementType>>> values, TensorOrder3 order = RowMaj3Order) 
 {
     Tensor<ElementType, 3> tensor3({(int)values.size(), (int)values.begin()->size(), (int)values.begin()->begin()->size()}, order);
+    
     int i = 0;
     for(auto row = values.begin(); row < values.end(); ++row, ++i)
     {
         int j = 0;
-        for(auto col = row->begin(); col < row->end(); ++col)
+        for(auto col = row->begin(); col < row->end(); ++col, ++j)
         {
             int k = 0;
-            for(auto element = col->begin(); element < col->end(); ++element)
+            for(auto element = col->begin(); element < col->end(); ++element, ++k)
             {
                 tensor3({i, j, k}) = *element;
-                ++k;
             }
-            ++j;
         }
-        ++i;
     }
     return tensor3;
+}
+
+template <typename ElementType>
+Tensor<ElementType, 4> GetTensor4(list<list<list<list<ElementType>>>> values, TensorOrder4 order = RowMaj4Order) 
+{
+    Tensor<ElementType, 4> tensor4(
+        {(int)values.size(), (int)values.begin()->size(), (int)values.begin()->begin()->size(), (int)values.begin()->begin()->begin()->size()},
+        order);
+    
+    int s = 0;
+    for(auto t = values.begin(); t < values.end(); ++t, ++s)
+    {
+        int i = 0;
+        for(auto row = t->begin(); row < t->end(); ++row, ++i)
+        {
+            int j = 0;
+            for(auto col = row->begin(); col < row->end(); ++col, ++j)
+            {
+                int k = 0;
+                for(auto element = col->begin(); element < col->end(); ++element, ++k)
+                {
+                    tensor4({s, i, j, k}) = *element;
+                }
+            }
+        }
+    }
+    return tensor4;
 }
 
 //

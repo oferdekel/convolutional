@@ -67,6 +67,10 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     const ElementType* V = W;
     const ElementType* U = X;
 
+
+    auto WMat = MatrixConstInterface<float>(W, { vRows * 9, vCols }, RowMaj2Order); 
+    std::cout << WMat << std::endl << std::endl;
+
     // allocate P to hold the partial unrolling input
     int pRows = yRows * yCols;
     int pCols = wChls;
@@ -80,14 +84,14 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     U = X;
     std::copy(U, U + pRows * pCols, P);
     SpacedDelete(P, pCols, 3, yRows - 2);
-    Gemm(true, false, true, pRows, vCols, pCols, 1, P, V, 0, Y + yRow * yCols);
+    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 0, Y + yRow * yCols);
     
     // input block corresponding to TOP CENTER filter elements (across all channels)
     V += vSize;
     pRows = (yRows - 1) * yCols;
     yRow = yCols;
     U = X;
-    Gemm(true, false, true, pRows, vCols, pCols, 1, U, V, 1, Y + yRow * yCols);
+    Gemm(true, true, true, pRows, vCols, pCols, 1, U, V, 1, Y + yRow * yCols);
 
     // input block corresponding to TOP RIGHT filter elements (across all channels)
     V += vSize;
@@ -96,7 +100,7 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     U = X + 1;
     std::copy(U, U + pRows * pCols, P);
     SpacedDelete(P, pCols, 3, yRows - 2);
-    Gemm(true, false, true, pRows, vCols, pCols, 1, P, V, 1, Y + yRow * yCols);
+//    Gemm(true, false, true, pRows, vCols, pCols, 1, P, V, 1, Y + yRow * yCols);
 
     // input block corresponding to MID LEFT filter elements (across all channels)
     V += vSize;
