@@ -54,7 +54,15 @@ int main(int argc, char** argv)
     // generate random filters in two memory orders
     engine.seed(seed1);
     auto WRowMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, RowMaj4Order);
+
+    auto xx = GetMatrix<float>({{1,1},{1,1}});
+    auto yy = GetTensor3<float>(
+        { {{1, 1},{1, 1}},
+          {{2, 2},{2, 2}},
+          {{3, 3},{3, 3}} });
  
+    std::cout << yy << std::endl;
+
     engine.seed(seed1);
     auto WChlMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, ChlMaj4Order);
  
@@ -138,7 +146,7 @@ int main(int argc, char** argv)
     RunTest([&]() -> Tensor<float,3>
     {
         auto properties = ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>{};
-        auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
+        auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
         Convolution(properties, WRowMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
         return YRowMaj;
     });

@@ -78,7 +78,7 @@ void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledIn
     }   
 
     // matrix-matrix multiply
-    Gemm(true, false, true, uRows, vCols, uCols, 1, URowMaj.data(), VColMaj, 1, ZRowMaj);
+    Gemm(true, false, true, uRows, vCols, uCols, 1, URowMaj.data(), VColMaj, 0, ZRowMaj);
 }
 
 // Unrolled-input convolution with channel-major input tensor and row-major output tensor 
@@ -152,7 +152,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, RowMajorOutput, Unroll
     }   
 
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, vCols, uCols, 1, UColMaj.data(), VColMaj, 1, ZRowMaj);
+    Gemm(false, false, true, uRows, vCols, uCols, 1, UColMaj.data(), VColMaj, 0, ZRowMaj);
 }
 
 // Unrolled-output convolution with row-major input tensor and row-major output tensor 

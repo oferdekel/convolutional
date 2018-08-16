@@ -70,7 +70,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, 
     }
     if (wRows != 3 || wCols != 3)
     {
-        throw std::invalid_argument("This implementation of Implicitly Padded Convolution is hard-coded for wRows = 3 and wCols = 3");
+        throw std::invalid_argument("This implementation of Convolution is hard-coded for wRows = 3 and wCols = 3");
     }
 
     // allocate a column-major matrix U to hold unrolled input
@@ -126,7 +126,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, 
     StructuredDelete(UColMajBlock - 1, yCols, yRows - 2, yCols + 1, wChls - 1);
 
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), W, 1, Y);
+    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), W, 0, Y);
 }
 
 // Unrolled-input convolution with implicit input padding, with channel-major input tensor and row-major output tensor 
@@ -204,7 +204,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
     }   
 
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), W, 1, ZRowMaj);
+    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), W, 0, ZRowMaj);
 
     // delete the padding
     int deleteSize = (wCols - 1) * wCount;
@@ -325,7 +325,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     }   
 
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), W, 1, ZRowMaj);
+    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), W, 0, ZRowMaj);
 
     // delete the padding
     int deleteSize = (wCols - 1) * wCount;

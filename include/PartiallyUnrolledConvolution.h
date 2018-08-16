@@ -51,28 +51,69 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     int yRows, 
     int yCols)
 {
+    if (hStride != 1 || vStride != 1)
+    {
+        throw std::invalid_argument("Implicitly Padded Convolution requires hStride = 1 and vStride = 1");
+    }
+    if (wRows != 3 || wCols != 3)
+    {
+        throw std::invalid_argument("This implementation of Convolution is hard-coded for wRows = 3 and wCols = 3");
+    }
+
+    int yRow;
+    int vRows = wChls;
+    int vCols = wCount;
+    int vSize = vRows * vCols;
+    const ElementType* V = W;
+    const ElementType* U = X;
+
     // allocate P to hold the partial unrolling input
     int pRows = yRows * yCols;
     int pCols = wChls;
     std::vector<ElementType> PRowMaj(pRows * pCols);
+    ElementType* P = PRowMaj.data();
 
     // unroll input
     // input block corresponding to TOP LEFT filter elements (across all channels)
-    // std::copy(X, X + blockSize - yCols - 1, URowMaj.data());
-    // StructuredDelete(UColMajBlock + yCols, yCols, yRows - 2, yCols + 1, wChls - 1);
-    // UColMajBlock += blockSize;
+    pRows = (yRows - 1) * yCols - 1;
+    yRow = yCols + 1;
+    U = X;
+    std::copy(U, U + pRows * pCols, P);
+    SpacedDelete(P, pCols, 3, yRows - 2);
+    Gemm(true, false, true, pRows, vCols, pCols, 1, P, V, 0, Y + yRow * yCols);
+    
+    // input block corresponding to TOP CENTER filter elements (across all channels)
+    V += vSize;
+    pRows = (yRows - 1) * yCols;
+    yRow = yCols;
+    U = X;
+    Gemm(true, false, true, pRows, vCols, pCols, 1, U, V, 1, Y + yRow * yCols);
 
-    // // input block corresponding to TOP CENTER filter elements (across all channels)
-    // std::copy(X, X + blockSize - yCols, URowMaj.data());
-    // StructuredDelete(UColMajBlock + yCols - 1, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
-    // UColMajBlock += blockSize;
+    // input block corresponding to TOP RIGHT filter elements (across all channels)
+    V += vSize;
+    pRows = (yRows - 1) * yCols - 1;
+    yRow = yCols;
+    U = X + 1;
+    std::copy(U, U + pRows * pCols, P);
+    SpacedDelete(P, pCols, 3, yRows - 2);
+    Gemm(true, false, true, pRows, vCols, pCols, 1, P, V, 1, Y + yRow * yCols);
 
-    // // input block corresponding to TOP RIGHT filter elements (across all channels)
-    // std::copy(X + 1, X + blockSize - yCols, URowMaj.data());
-    // StructuredDelete(UColMajBlock + yCols - 1, yCols, yRows - 2, yCols + 1, wChls - 1);
-    // UColMajBlock += blockSize;
+    // input block corresponding to MID LEFT filter elements (across all channels)
+    V += vSize;
+    pRows = yRows * yCols - 1;
+    yRow = 1;
+    U = X;
+    std::copy(U, U + pRows * pCols, P);
+    SpacedDelete(P, pCols, 3, yRows - 1);
+    Gemm(true, false, true, pRows, vCols, pCols, 1, P, V, 1, Y + yRow * yCols);
 
-    // // input block corresponding to MID LEFT filter elements (across all channels)
+    // input block corresponding to MID CENTER filter elements (across all channels)
+    V += vSize;
+    pRows = yRows * yCols;
+    yRow = 0;
+    U = X;
+    Gemm(true, false, true, pRows, vCols, pCols, 1, U, V, 1, Y + yRow * yCols);
+
     // std::copy(X, X + blockSize - 1, URowMaj.data());
     // StructuredDelete(UColMajBlock, yCols, yRows * wChls - 1, 0, 0);
     // UColMajBlock += blockSize;

@@ -14,17 +14,22 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <initializer_list>
 
 template <int degree>
 using IntTuple = std::array<int, degree>;
 
 // predefined orderings
-const IntTuple<2> RowMaj2Order = { 1, 0 };
-const IntTuple<2> ColMaj2Order = { 0, 1 };
-const IntTuple<3> RowMaj3Order = { 2, 1, 0 };
-const IntTuple<3> ChlMaj3Order = { 1, 0, 2 };
-const IntTuple<4> RowMaj4Order = {3, 2, 1, 0};
-const IntTuple<4> ChlMaj4Order = {2, 1, 3, 0};
+using TensorOrder2 = IntTuple<2>;
+using TensorOrder3 = IntTuple<3>;
+using TensorOrder4 = IntTuple<4>;
+
+const TensorOrder2 RowMaj2Order = { 1, 0 };
+const TensorOrder2 ColMaj2Order = { 0, 1 };
+const TensorOrder3 RowMaj3Order = { 2, 1, 0 };
+const TensorOrder3 ChlMaj3Order = { 1, 0, 2 };
+const TensorOrder4 RowMaj4Order = {3, 2, 1, 0};
+const TensorOrder4 ChlMaj4Order = {2, 1, 3, 0};
 
 //
 // A Tensor is a multi-dimensional array, which can be represented in memory in different orders. A TensorConstInterface defines all of the const methods of a tensor. A TensorConstInterface does not own allocate its own memory.
@@ -120,7 +125,7 @@ template <typename ElementType, int degree>
 class Tensor : public TensorInterface<ElementType, degree>
 {
 public: 
-    // constructor
+    // constructors
     Tensor(IntTuple<degree> shape, IntTuple<degree> order);
 
 private:
@@ -143,7 +148,55 @@ using MatrixInterface = TensorInterface<ElementType, 2>;
 template <typename ElementType>
 using Matrix = Tensor<ElementType, 2>;
 
-using MatrixOrder = IntTuple<2>;
+using MatrixOrder = TensorOrder2;
+
+//
+// Matrix helper functions
+//
+
+template <typename T>
+using list = std::initializer_list<T>;
+
+template <typename ElementType>
+Matrix<ElementType> GetMatrix(list<list<ElementType>> values, MatrixOrder order = RowMaj2Order) 
+{
+    Matrix<ElementType> matrix({(int)values.size(), (int)values.begin()->size()}, order);
+    int i = 0;
+    for(auto row = values.begin(); row < values.end(); ++row)
+    {
+        int j = 0;
+        for(auto element = row->begin(); element < row->end(); ++element)
+        {
+            matrix({i,j}) = *element;
+            ++j;
+        }
+        ++i;
+    }
+    return matrix;
+}
+
+template <typename ElementType>
+Tensor<ElementType, 3> GetTensor3(list<list<list<ElementType>>> values, TensorOrder3 order = RowMaj3Order) 
+{
+    Tensor<ElementType, 3> tensor3({(int)values.size(), (int)values.begin()->size(), (int)values.begin()->begin()->size()}, order);
+    int i = 0;
+    for(auto row = values.begin(); row < values.end(); ++row, ++i)
+    {
+        int j = 0;
+        for(auto col = row->begin(); col < row->end(); ++col)
+        {
+            int k = 0;
+            for(auto element = col->begin(); element < col->end(); ++element)
+            {
+                tensor3({i, j, k}) = *element;
+                ++k;
+            }
+            ++j;
+        }
+        ++i;
+    }
+    return tensor3;
+}
 
 //
 //
