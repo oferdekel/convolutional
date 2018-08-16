@@ -84,11 +84,11 @@ int main(int argc, char** argv)
     engine.seed(seed2);
     auto XRowMajExp = GetRandomTensor<float, 3>(engine, { xRows, xCols, xChls }, RowMaj3Order, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});
     // GetTensor3<float>(
-        // { { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} },
-        //   { {0, 0}, {11, 12}, {13, 14}, {15, 16}, {0, 0} },
-        //   { {0, 0}, {2, 2}, {2, 2}, {2, 2}, {0, 0} },
-        //   { {0, 0}, {31, 32}, {33, 34}, {35, 36}, {0, 0} },
-        //   { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} } });
+    //     { { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} },
+    //       { {0, 0}, {11, 12}, {13, 14}, {15, 16}, {0, 0} },
+    //       { {0, 0}, {2, 2}, {2, 2}, {2, 2}, {0, 0} },
+    //       { {0, 0}, {31, 32}, {33, 34}, {35, 36}, {0, 0} },
+    //       { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} } });
 
     engine.seed(seed2);
     auto XChlMajExp = GetRandomTensor<float, 3>(engine, { xRows, xCols, xChls }, ChlMaj3Order, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});

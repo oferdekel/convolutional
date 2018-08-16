@@ -9,16 +9,46 @@
 
 #include "ConvolutionProperties.h"
 
-// Structured delete subroutine
 template <typename ElementType>
-void SpacedDelete(ElementType* begin, int size, int frequency, int count)
+void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementType* P, ElementType* Y,  int wCount, int wChls,int yCols, int position, int xRow, int xCol, int pRows, int yRow)
 {
-    begin += (frequency - 1) * size;
-    for(int i = 0; i < count; ++i)
+    int pCols = wChls;
+    int vCols = wCount;
+    int vSize = wChls * wCount;
+
+    // copy the relevant part of X into the partial unrolled-input matrix P
+    const ElementType* source = X + (xRow * yCols + xCol) * wChls; 
+    int copySize = pRows * pCols;
+    std::copy(source, source + copySize, P);
+
+    // delete unwanted values from P
+    for(int pRow = 2; pRow < pRows; pRow += 3)
     {
-        std::fill_n(begin, size, (ElementType)0);
-        begin += frequency * size;
+        std::fill_n(P + pRow * pCols, pCols, (ElementType)0);
     }
+
+    // define relevant submatrices of W and Y
+    const ElementType* V = W + position * vSize;
+    ElementType* Z = Y + yRow * yCols;
+
+    // multiply
+    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
+}
+
+template <typename ElementType>
+void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementType* Y,  int wCount, int wChls, int yCols, int position, int xRow, int xCol, int pRows, int yRow)
+{
+    int pCols = wChls;
+    int vSize = wChls * wCount;
+    int vCols = wCount;
+
+    // define relevant submatrices of X, W, and Y
+    const ElementType* P = X + (xRow * yCols + xCol) * wChls; 
+    const ElementType* V = W + position * vSize;
+    ElementType* Z = Y + yRow * yCols;
+
+    // multiply
+    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
 }
 
 // Convolution with partially unrolled input, implicit input padding, row-major input tensor, and row-major output tensor 
@@ -60,93 +90,37 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
         throw std::invalid_argument("This implementation of Convolution is hard-coded for wRows = 3 and wCols = 3");
     }
 
-    int yRow;
-    int vRows = wChls;
-    int vCols = wCount;
-    int vSize = vRows * vCols;
-    const ElementType* V = W;
-    const ElementType* U = X;
-
-    // allocate P to hold the partial unrolling input
-    int pRows = yRows * yCols;
-    int pCols = wChls;
-    std::vector<ElementType> PRowMaj(pRows * pCols);
+    // allocate P to hold the partially unrolled input
+    std::vector<ElementType> PRowMaj(yRows * yCols * wChls);
     ElementType* P = PRowMaj.data();
 
     // unroll input
-    // input block corresponding to TOP LEFT filter elements (across all channels)
-    pRows = (yRows - 1) * yCols - 1;
-    yRow = yCols + 1;
-    U = X;
-    std::copy(U, U + pRows * pCols, P);
-    SpacedDelete(P, pCols, 3, yRows - 2);
-    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 0, Y + yRow * yCols);
-    
-    // input block corresponding to TOP CENTER filter elements (across all channels)
-    V += vSize;
-    pRows = (yRows - 1) * yCols;
-    yRow = yCols;
-    U = X;
-    Gemm(true, true, true, pRows, vCols, pCols, 1, U, V, 1, Y + yRow * yCols);
+    // process the TOP LEFT filter position (across all channels)
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 0, 0, 0, (yRows - 1) * yCols - 1, yCols + 1);
 
-    // input block corresponding to TOP RIGHT filter elements (across all channels)
-    V += vSize;
-    pRows = (yRows - 1) * yCols - 1;
-    yRow = yCols;
-    U = X + wChls;
-    std::copy(U, U + pRows * pCols, P);
-    SpacedDelete(P, pCols, 3, yRows - 2);
-    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Y + yRow * yCols);
+    // process the TOP CENTER filter position (across all channels)
+    ProcessFilterPosition(W, X, Y, wCount, wChls, yCols, 1, 0, 0, (yRows - 1) * yCols, yCols);
 
-    // input block corresponding to MID LEFT filter elements (across all channels)
-    V += vSize;
-    pRows = yRows * yCols - 1;
-    yRow = 1;
-    U = X;
-    std::copy(U, U + pRows * pCols, P);
-    SpacedDelete(P, pCols, 3, yRows - 1);
-    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Y + yRow * yCols);
+    // process the TOP RIGHT filter position (across all channels)
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 2, 0, 1, (yRows - 1) * yCols - 1, yCols);
 
-    // input block corresponding to MID CENTER filter elements (across all channels)
-    V += vSize;
-    pRows = yRows * yCols;
-    yRow = 0;
-    U = X;
-    Gemm(true, true, true, pRows, vCols, pCols, 1, U, V, 1, Y + yRow * yCols);
+    // process the MID LEFT filter position (across all channels)
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 3, 0, 0, yRows * yCols - 1, 1);
 
-    // input block corresponding to MID RIGHT filter elements (across all channels)
-    V += vSize;
-    pRows = yRows * yCols - 1;
-    yRow = 0;
-    U = X + wChls;
-    std::copy(U, U + pRows * pCols, P);
-    SpacedDelete(P, pCols, 3, yRows - 1);
-    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Y + yRow * yCols);
+    // process the MID CENTER filter position (across all channels)
+    ProcessFilterPosition(W, X, Y, wCount, wChls, yCols, 4, 0, 0, yRows * yCols, 0);
 
-    // input block corresponding to BOTTOM LEFT filter elements (across all channels)
-    V += vSize;
-    pRows = (yRows - 1) * yCols - 1;
-    yRow = 1;
-    U = X + yCols * wChls;
-    std::copy(U, U + pRows * pCols, P);
-    SpacedDelete(P, pCols, 3, yRows - 2);
-    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Y + yRow * yCols);
+    // process the MID RIGHT filter position (across all channels)
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 5, 0, 1, yRows * yCols - 1, 0);
 
-    // input block corresponding to BOTTOM CENTER filter elements (across all channels)
-    V += vSize;
-    pRows = (yRows - 1) * yCols;
-    yRow = 0;
-    U = X + yCols * wChls;
-    Gemm(true, true, true, pRows, vCols, pCols, 1, U, V, 1, Y + yRow * yCols);
+    // process the BOTTOM LEFT filter position (across all channels)
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 6, 1, 0, (yRows - 1) * yCols - 1, 1);
 
-    // input block corresponding to BOTTOM RIGHT filter elements (across all channels)
-    V += vSize;
-    pRows = (yRows - 1) * yCols - 1;
-    yRow = 0;
-    U = X + (yCols + 1) * wChls;
-    std::copy(U, U + pRows * pCols, P);
-    SpacedDelete(P, pCols, 3, yRows - 2);
-    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Y + yRow * yCols);
+    // process the BOTTOM CENTER filter position (across all channels)
+    ProcessFilterPosition(W, X, Y, wCount, wChls, yCols, 7, 1, 0, (yRows - 1) * yCols, 0);
+
+    // process the BOTTOM RIGHT filter position (across all channels)
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 8, 1, 1, (yRows - 1) * yCols - 1, 0);
 }
 
 template <typename ElementType>
