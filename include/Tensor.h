@@ -195,7 +195,7 @@ Tensor<ElementType, 3> GetTensor3(list<list<list<ElementType>>> values, TensorOr
 }
 
 template <typename ElementType>
-Tensor<ElementType, 4> GetTensor4(list<list<list<list<ElementType>>>> values, TensorOrder4 order = RowMaj4Order) 
+Tensor<ElementType, 4> GetTensor4(list<list<list<list<ElementType>>>> values, TensorOrder4 order = {3, 2, 1, 0}) 
 {
     Tensor<ElementType, 4> tensor4(
         {(int)values.size(), (int)values.begin()->size(), (int)values.begin()->begin()->size(), (int)values.begin()->begin()->begin()->size()},

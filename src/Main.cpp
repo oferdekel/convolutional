@@ -55,43 +55,50 @@ int main(int argc, char** argv)
     engine.seed(seed1);
     auto WFilMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, {3, 2, 1, 0});
     // GetTensor4<float>(
-    //   { { { {1, 1}, {1, 1}, {1, 1} },
-    //       { {2, 2}, {2, 2}, {2, 2} },
-    //       { {3, 3}, {3, 3}, {3, 3} } },
-    //     { { {1, 1}, {1, 1}, {1, 1} },
-    //       { {2, 2}, {2, 2}, {2, 2} },
-    //       { {3, 3}, {3, 3}, {3, 3} } },
-    //     { { {1, 1}, {1, 1}, {1, 1} },
-    //       { {2, 2}, {2, 2}, {2, 2} },
-    //       { {3, 3}, {3, 3}, {3, 3} } } });
+    //   { { { {1, 1}, {-1, 1}, {3, 1} },
+    //       { {2, 2}, {2, 3}, {2, 2} },
+    //       { {3, 1}, {3, -4}, {-4, -3} } },
+    //     { { {-1, 1}, {1, -1}, {-1, 2} },
+    //       { {1, 2}, {3, 2}, {2, 2} },
+    //       { {3, 3}, {-3, 3}, {-3, 3} } },
+    //     { { {1, 1}, {2, 1}, {4, -2} },
+    //       { {2, -2}, {4, 2}, {1, 2} },
+    //       { {3, 1}, {-3, 1}, {4, 3} } } },
+    //       {3, 2, 1, 0});
  
     engine.seed(seed1);
     auto WRowMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, {0, 3, 2, 1});
     // GetTensor4<float>(
-    //   { { { {1, 1}, {1, 1}, {1, 1} },
-    //       { {2, 2}, {2, 2}, {2, 2} },
-    //       { {3, 3}, {3, 3}, {3, 3} } },
-    //     { { {1, 1}, {1, 1}, {1, 1} },
-    //       { {2, 2}, {2, 2}, {2, 2} },
-    //       { {3, 3}, {3, 3}, {3, 3} } },
-    //     { { {1, 1}, {1, 1}, {1, 1} },
-    //       { {2, 2}, {2, 2}, {2, 2} },
-    //       { {3, 3}, {3, 3}, {3, 3} } } }, 
+    //   { { { {1, 1}, {-1, 1}, {3, 1} },
+    //       { {2, 2}, {2, 3}, {2, 2} },
+    //       { {3, 1}, {3, -4}, {-4, -3} } },
+    //     { { {-1, 1}, {1, -1}, {-1, 2} },
+    //       { {1, 2}, {3, 2}, {2, 2} },
+    //       { {3, 3}, {-3, 3}, {-3, 3} } },
+    //     { { {1, 1}, {2, 1}, {4, -2} },
+    //       { {2, -2}, {4, 2}, {1, 2} },
+    //       { {3, 1}, {-3, 1}, {4, 3} } } },
     //       {0, 3, 2, 1});
  
     // generate random input in both row-major and channel-major orders, and with both explicit and implicit zero-padding
     engine.seed(seed2);
     auto XRowMajExp = GetRandomTensor<float, 3>(engine, { xRows, xCols, xChls }, RowMaj3Order, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});
+    // GetTensor3<float>(
+        // { { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} },
+        //   { {0, 0}, {11, 12}, {13, 14}, {15, 16}, {0, 0} },
+        //   { {0, 0}, {2, 2}, {2, 2}, {2, 2}, {0, 0} },
+        //   { {0, 0}, {31, 32}, {33, 34}, {35, 36}, {0, 0} },
+        //   { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} } });
 
     engine.seed(seed2);
     auto XChlMajExp = GetRandomTensor<float, 3>(engine, { xRows, xCols, xChls }, ChlMaj3Order, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});
 
     engine.seed(seed2);
     auto XRowMajImp = GetRandomTensor<float, 3>(engine, { yRows, yCols, xChls }, RowMaj3Order);
-    //   GetTensor3<float>(
-        // { { {1, 1}, {1, 1}, {1, 1} },
-        //   { {2, 2}, {2, 2}, {2, 2} },
-        //   { {3, 3}, {3, 3}, {3, 3} } });
+    //  GetTensor3<float>(
+    //     { { {11, 12}, {13, 14}, {15, 16} },
+    //       { {2, 2}, {2, 2}, {2, 2} },
+    //       { {31, 32}, {33, 34}, {35, 36} } });
 
     engine.seed(seed2);
     auto XChlMajImp = GetRandomTensor<float, 3>(engine, { yRows, yCols, xChls }, ChlMaj3Order);
