@@ -198,7 +198,7 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
-        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
         return YRowMaj;
     });
 

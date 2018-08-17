@@ -123,6 +123,22 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 8, (ElementType)1, 1, 1, (yRows - 1) * yCols - 1, 0);
 }
 
+// Convolution with partially unrolled input, explicit output padding, row-major input tensor, and row-major output tensor  
+//
+// W - 4-dimensional weights tensor in filter-major order
+// X - 3-dimensional input tensor in channel-major order
+// Y - 3-dimensional zero-padded output tensor in row-major order
+// wCount - number of filters in W
+// wRows - number of rows in each filter in W
+// wCols - number of columns in each filter in W
+// wChls - number of channels in each filter in W
+// vStride - vertical stride
+// hStride - horizontal stride
+// yRows - number of rows in the output tensor Y
+// yCols - number of columns in the output tensor Y
+// yPadTop - the number of explicit zero-padding rows at the top of the output
+// yPadLeft - the number of explicit zero-padding columns at the left of the output
+//
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>, 
     const ElementType* W, 
@@ -135,9 +151,52 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledI
     int vStride, 
     int hStride, 
     int yRows, 
-    int yCols)
+    int yCols, 
+    int yPadTop, 
+    int yPadLeft)
 {
-    throw std::invalid_argument("Not yet implemented");
+    if (hStride != 1 || vStride != 1)
+    {
+        throw std::invalid_argument("Implicitly Padded Convolution requires hStride = 1 and vStride = 1");
+    }
+    if (yPadTop * 2 + 1 != wRows || yPadLeft * 2 + 1 != wCols)
+    {
+        throw std::invalid_argument("yPapTop and yPadLeft must be consistent with wRows and wCols");
+    }
+
+    int xRows = yRows + wRows - 1;
+    int xCols = yCols + wCols - 1;
+    int xChls = wChls;
+
+    // allocate P to hold the partially unrolled input
+    int pRows = yRows * yCols + (yRows - 1) * (wCols - 1);
+    int pCols = wChls;
+
+    const ElementType* VColMaj = W;
+    ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
+
+    int copySize = pRows;
+
+    // unroll input
+    for(int wRow = 0; wRow < wRows; ++wRow) 
+    {
+        for(int wCol = 0; wCol < wCols; ++wCol) 
+        {
+            // partially unroll the input by reshaping
+            
+            const ElementType* P = X; // TODO
+
+            // Gemm
+        }   
+    }   
+
+    // delete the padding
+    int deleteSize = (wCols - 1) * wCount;
+    for(int yRow = 0; yRow < yRows - 1; ++yRow)
+    {
+        ElementType* begin = Z + (yCols + xCols * yRow) * wCount;
+        std::fill(begin, begin + deleteSize, (ElementType)0);
+    }
 }
 
 // Unrolled-input convolution with implicit input padding, with channel-major input tensor and row-major output tensor 
