@@ -10,7 +10,7 @@
 #include "ConvolutionProperties.h"
 
 template <typename ElementType>
-void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementType* P, ElementType* Y,  int wCount, int wChls,int yCols, int position, int xRow, int xCol, int pRows, int yRow)
+void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementType* P, ElementType* Y,  int wCount, int wChls,int yCols, int position, ElementType beta, int xRow, int xCol, int pRows, int yRow)
 {
     int pCols = wChls;
     int vCols = wCount;
@@ -22,17 +22,17 @@ void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementTy
     std::copy(source, source + copySize, P);
 
     // delete unwanted values from P
-    for(int pRow = 2; pRow < pRows; pRow += 3)
+    for(int pRow = yCols - 1; pRow < pRows; pRow += yCols)
     {
         std::fill_n(P + pRow * pCols, pCols, (ElementType)0);
     }
 
     // define relevant submatrices of W and Y
     const ElementType* V = W + position * vSize;
-    ElementType* Z = Y + yRow * yCols;
+    ElementType* Z = Y + yRow * vCols;
 
     // multiply
-    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
+    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
 }
 
 template <typename ElementType>
@@ -45,7 +45,7 @@ void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementTy
     // define relevant submatrices of X, W, and Y
     const ElementType* P = X + (xRow * yCols + xCol) * wChls; 
     const ElementType* V = W + position * vSize;
-    ElementType* Z = Y + yRow * yCols;
+    ElementType* Z = Y + yRow * vCols;
 
     // multiply
     Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
@@ -96,31 +96,31 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
 
     // unroll input
     // process the TOP LEFT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 0, 0, 0, (yRows - 1) * yCols - 1, yCols + 1);
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 0, (ElementType)0, 0, 0, (yRows - 1) * yCols - 1, yCols + 1);
 
     // process the TOP CENTER filter position (across all channels)
     ProcessFilterPosition(W, X, Y, wCount, wChls, yCols, 1, 0, 0, (yRows - 1) * yCols, yCols);
 
     // process the TOP RIGHT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 2, 0, 1, (yRows - 1) * yCols - 1, yCols);
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 2, (ElementType)1, 0, 1, (yRows - 1) * yCols - 1, yCols);
 
     // process the MID LEFT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 3, 0, 0, yRows * yCols - 1, 1);
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 3, (ElementType)1, 0, 0, yRows * yCols - 1, 1);
 
     // process the MID CENTER filter position (across all channels)
     ProcessFilterPosition(W, X, Y, wCount, wChls, yCols, 4, 0, 0, yRows * yCols, 0);
 
     // process the MID RIGHT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 5, 0, 1, yRows * yCols - 1, 0);
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 5, (ElementType)1, 0, 1, yRows * yCols - 1, 0);
 
     // process the BOTTOM LEFT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 6, 1, 0, (yRows - 1) * yCols - 1, 1);
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 6, (ElementType)1, 1, 0, (yRows - 1) * yCols - 1, 1);
 
     // process the BOTTOM CENTER filter position (across all channels)
     ProcessFilterPosition(W, X, Y, wCount, wChls, yCols, 7, 1, 0, (yRows - 1) * yCols, 0);
 
     // process the BOTTOM RIGHT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 8, 1, 1, (yRows - 1) * yCols - 1, 0);
+    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 8, (ElementType)1, 1, 1, (yRows - 1) * yCols - 1, 0);
 }
 
 template <typename ElementType>

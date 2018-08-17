@@ -24,11 +24,11 @@ int main(int argc, char** argv)
     int wRows = 3;
     int wCols = 3;
     int wChls = 2;
-    int wCount = 3;
+    int wCount = 5;
 
     // output shape
-    int yRows = 3;
-    int yCols = 4;
+    int yRows = 5;
+    int yCols = 5;
     int yChls = wCount;
 
     // convolution strides
@@ -52,75 +52,75 @@ int main(int argc, char** argv)
     std::default_random_engine engine;
 
     // generate random filters in two memory orders
-    // engine.seed(seed1);
-    // auto WFilMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, {3, 2, 1, 0});
-    // engine.seed(seed1);
-    // auto WRowMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, {0, 3, 2, 1});
+    engine.seed(seed1);
+    auto WFilMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, {3, 2, 1, 0});
+    engine.seed(seed1);
+    auto WRowMaj = GetRandomTensor<float, 4>(engine, { wCount, wRows, wCols, wChls }, {0, 3, 2, 1});
 
-    // // generate random input in both row-major and channel-major orders, and with both explicit and implicit zero-padding
-    // engine.seed(seed2);
-    // auto XRowMajExp = GetRandomTensor<float, 3>(engine, { xRows, xCols, xChls }, RowMaj3Order, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});
-    // engine.seed(seed2);
-    // auto XChlMajExp = GetRandomTensor<float, 3>(engine, { xRows, xCols, xChls }, ChlMaj3Order, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});
-    // engine.seed(seed2);
-    // auto XRowMajImp = GetRandomTensor<float, 3>(engine, { yRows, yCols, xChls }, RowMaj3Order);
-    // engine.seed(seed2);
-    // auto XChlMajImp = GetRandomTensor<float, 3>(engine, { yRows, yCols, xChls }, ChlMaj3Order);
+    // generate random input in both row-major and channel-major orders, and with both explicit and implicit zero-padding
+    engine.seed(seed2);
+    auto XRowMajExp = GetRandomTensor<float, 3>(engine, { xRows, xCols, xChls }, RowMaj3Order, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});
+    engine.seed(seed2);
+    auto XChlMajExp = GetRandomTensor<float, 3>(engine, { xRows, xCols, xChls }, ChlMaj3Order, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});
+    engine.seed(seed2);
+    auto XRowMajImp = GetRandomTensor<float, 3>(engine, { yRows, yCols, xChls }, RowMaj3Order);
+    engine.seed(seed2);
+    auto XChlMajImp = GetRandomTensor<float, 3>(engine, { yRows, yCols, xChls }, ChlMaj3Order);
 
     // debug
 
-    auto WFilMaj = GetTensor4<float>(
-      { { { {1, 1}, {-1, 1}, {3, 1} },
-          { {2, 2}, {2, 3}, {2, 2} },
-          { {3, 1}, {3, -4}, {-4, -3} } },
-        { { {-1, 1}, {1, -1}, {-1, 2} },
-          { {1, 2}, {3, 2}, {2, 2} },
-          { {3, 3}, {-3, 3}, {-3, 3} } },
-        { { {1, 1}, {2, 1}, {4, -2} },
-          { {2, -2}, {4, 2}, {1, 2} },
-          { {3, 1}, {-3, 1}, {4, 3} } } },
-          {3, 2, 1, 0});
+    // auto WFilMaj = GetTensor4<float>(
+    //   { { { {1, 1}, {-1, 1}, {3, 1} },
+    //       { {2, 2}, {2, 3}, {2, 2} },
+    //       { {3, 1}, {3, -4}, {-4, -3} } },
+    //     { { {-1, 1}, {1, -1}, {-1, 2} },
+    //       { {1, 2}, {3, 2}, {2, 2} },
+    //       { {3, 3}, {-3, 3}, {-3, 3} } },
+    //     { { {1, 1}, {2, 1}, {4, -2} },
+    //       { {2, -2}, {4, 2}, {1, 2} },
+    //       { {3, 1}, {-3, 1}, {4, 3} } } },
+    //       {3, 2, 1, 0});
  
-    auto WRowMaj = GetTensor4<float>(
-      { { { {1, 1}, {-1, 1}, {3, 1} },
-          { {2, 2}, {2, 3}, {2, 2} },
-          { {3, 1}, {3, -4}, {-4, -3} } },
-        { { {-1, 1}, {1, -1}, {-1, 2} },
-          { {1, 2}, {3, 2}, {2, 2} },
-          { {3, 3}, {-3, 3}, {-3, 3} } },
-        { { {1, 1}, {2, 1}, {4, -2} },
-          { {2, -2}, {4, 2}, {1, 2} },
-          { {3, 1}, {-3, 1}, {4, 3} } } },
-          {0, 3, 2, 1});
+    // auto WRowMaj = GetTensor4<float>(
+    //   { { { {1, 1}, {-1, 1}, {3, 1} },
+    //       { {2, 2}, {2, 3}, {2, 2} },
+    //       { {3, 1}, {3, -4}, {-4, -3} } },
+    //     { { {-1, 1}, {1, -1}, {-1, 2} },
+    //       { {1, 2}, {3, 2}, {2, 2} },
+    //       { {3, 3}, {-3, 3}, {-3, 3} } },
+    //     { { {1, 1}, {2, 1}, {4, -2} },
+    //       { {2, -2}, {4, 2}, {1, 2} },
+    //       { {3, 1}, {-3, 1}, {4, 3} } } },
+    //       {0, 3, 2, 1});
  
 
-    auto XRowMajExp = GetTensor3<float>(
-        { { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} },
-          { {0, 0}, {11, 12}, {13, 14}, {1, 2}, {15, 16}, {0, 0} },
-          { {0, 0}, {2, 2}, {2, 2}, {1, 2}, {2, 2}, {0, 0} },
-          { {0, 0}, {3, 2}, {3, 4}, {1, 2}, {5, 6}, {0, 0} },
-          { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} } },
-          RowMaj3Order);
+    // auto XRowMajExp = GetTensor3<float>(
+    //     { { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} },
+    //       { {0, 0}, {11, 12}, {13, 14}, {1, 2}, {15, 16}, {0, 0} },
+    //       { {0, 0}, {2, 2}, {2, 2}, {1, 2}, {2, 2}, {0, 0} },
+    //       { {0, 0}, {3, 2}, {3, 4}, {1, 2}, {5, 6}, {0, 0} },
+    //       { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} } },
+    //       RowMaj3Order);
 
-    auto XChlMajExp = GetTensor3<float>(
-        { { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} },
-          { {0, 0}, {11, 12}, {13, 14}, {1, 2}, {15, 16}, {0, 0} },
-          { {0, 0}, {2, 2}, {2, 2}, {1, 2}, {2, 2}, {0, 0} },
-          { {0, 0}, {3, 2}, {3, 4}, {1, 2}, {5, 6}, {0, 0} },
-          { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} } },
-          ChlMaj3Order);
+    // auto XChlMajExp = GetTensor3<float>(
+    //     { { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} },
+    //       { {0, 0}, {11, 12}, {13, 14}, {1, 2}, {15, 16}, {0, 0} },
+    //       { {0, 0}, {2, 2}, {2, 2}, {1, 2}, {2, 2}, {0, 0} },
+    //       { {0, 0}, {3, 2}, {3, 4}, {1, 2}, {5, 6}, {0, 0} },
+    //       { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} } },
+    //       ChlMaj3Order);
 
-    auto XRowMajImp = GetTensor3<float>(
-        { { {11, 12}, {13, 14}, {1, 2}, {15, 16} },
-          { {2, 2}, {2, 2}, {1, 2}, {2, 2} },
-          { {3, 2}, {3, 4}, {1, 2}, {5, 6} } },
-          RowMaj3Order);
+    // auto XRowMajImp = GetTensor3<float>(
+    //     { { {11, 12}, {13, 14}, {1, 2}, {15, 16} },
+    //       { {2, 2}, {2, 2}, {1, 2}, {2, 2} },
+    //       { {3, 2}, {3, 4}, {1, 2}, {5, 6} } },
+    //       RowMaj3Order);
 
-    auto XChlMajImp = GetTensor3<float>(
-        { { {11, 12}, {13, 14}, {1, 2}, {15, 16} },
-          { {2, 2}, {2, 2}, {1, 2}, {2, 2} },
-          { {3, 2}, {3, 4}, {1, 2}, {5, 6} } },
-          ChlMaj3Order);
+    // auto XChlMajImp = GetTensor3<float>(
+    //     { { {11, 12}, {13, 14}, {1, 2}, {15, 16} },
+    //       { {2, 2}, {2, 2}, {1, 2}, {2, 2} },
+    //       { {3, 2}, {3, 4}, {1, 2}, {5, 6} } },
+    //       ChlMaj3Order);
 
     // for loop convolution
     std::cout << "for loop convolution" << std::endl;
