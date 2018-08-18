@@ -168,6 +168,9 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledI
     int xCols = yCols + wCols - 1;
     int xChls = wChls;
 
+    int vCols = wCount;
+    int vSize = wChls * wCount;
+
     // allocate P to hold the partially unrolled input
     int pRows = yRows * yCols + (yRows - 1) * (wCols - 1);
     int pCols = wChls;
@@ -178,50 +181,26 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledI
     int copySize = pRows;
 
     // unroll input
-    for(int wRow = 0; wRow < wRows; ++wRow) 
+    const ElementType* P = X;
+    const ElementType* V = W;
+    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 0, Z);
+
+    for(int wCol = 1; wCol < wCols; ++wCol) 
+    {
+        P = X + wCol * xChls;
+        V += vSize;
+        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
+    }   
+
+    for(int wRow = 1; wRow < wRows; ++wRow) 
     {
         for(int wCol = 0; wCol < wCols; ++wCol) 
         {
-            // partially unroll the input by reshaping
-            
-            const ElementType* P = X + (wRow * xCols + wCol) * wChls;
-
-            // Gemm
+            P = X + (wRow * xCols + wCol) * xChls;
+            V += vSize;
+            Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
         }   
     }   
-
-                // const float* source = X + (wChl * xRows + wRow) * xCols + wCol;
-
-                // // calculate copy target
-                // int uCol = (wRow * wCols + wCol) * wChls + wChl;
-                // float* target = UColMaj.data() + uCol * copySize;
-
-                // // copy from X to U
-                // std::copy(source, source + copySize, target);
-
-    // for (int i = 0; i < _l; ++i)
-    // {
-    //     for (int j = 0; j < _m; ++j)
-    //     {
-    //         Gemm(CBLAS_ORDER::CblasRowMajor,
-    //              CBLAS_TRANSPOSE::CblasNoTrans,
-    //              CBLAS_TRANSPOSE::CblasTrans,
-    //              _a * _b + (_a - 1) * _e,
-    //              _c,
-    //              _n,
-    //              1,
-    //              &X(i, j, 0),
-    //              _n,
-    //              _arrV.data() + (i * _m + j) * _n,
-    //              _l * _m * _n,
-    //              1,
-    //              &_Y(_d / 2, _e / 2, 0),
-    //              _c);
-    //     }
-    // }
-
-
-
 
     // delete the padding
     int deleteSize = (wCols - 1) * wCount;

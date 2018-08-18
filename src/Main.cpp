@@ -24,11 +24,11 @@ int main(int argc, char** argv)
     int wRows = 3;
     int wCols = 3;
     int wChls = 2;
-    int wCount = 5;
+    int wCount = 3;
 
     // output shape
-    int yRows = 5;
-    int yCols = 5;
+    int yRows = 4;
+    int yCols = 3;
     int yChls = wCount;
 
     // convolution strides
@@ -198,7 +198,7 @@ int main(int argc, char** argv)
     {
         auto properties = ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
-        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
+        Convolution(properties, WRowMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
         return YRowMaj;
     });
 
