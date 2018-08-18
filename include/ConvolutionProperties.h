@@ -10,17 +10,18 @@
 #include <tuple>
 
 // properties used to specialize the implementation of convolution 
-struct None{};
-struct UnrolledInput{};
-struct PartiallyUnrolledInput{};
-struct UnrolledOutput{};
-struct RowMajorInput{};
 struct ChannelMajorInput{};
-struct RowMajorOutput{};
 struct ChannelMajorOutput{};
-struct ImplicitInputPadding{};
 struct ExplicitInputPadding{};
 struct ExplicitOutputPadding{};
+struct FilterMajorFilters{};
+struct ImplicitInputPadding{};
+struct PartiallyUnrolledInput{};
+struct RowMajorFilters{};
+struct RowMajorInput{};
+struct RowMajorOutput{};
+struct UnrolledInput{};
+struct UnrolledOutput{};
 
 // convenient way of collecting an arbitrary number of properties
 template<typename ... T>

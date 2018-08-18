@@ -51,7 +51,7 @@ void StructuredDelete(ElementType* begin, int skip, int singles, int size,  int 
 // yCols - number of columns in the output tensor Y
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, RowMajorOutput, UnrolledInput>,
+void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, UnrolledInput>,
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -146,7 +146,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ImplicitInputPadding, 
 // yPadLeft - the number of explicit zero-padding columns at the left of the output
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, RowMajorOutput, UnrolledInput>, 
+void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, RowMajorOutput, UnrolledInput>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -261,7 +261,7 @@ int GetDistFromContent(int xRow, int xCol, int xRows, int xCols, int xPadBottom,
 // yPadLeft - the number of implicit zero-padding columns at the left of the input
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, RowMajorOutput, UnrolledInput>, 
+void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, RowMajorOutput, UnrolledInput>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 

@@ -27,7 +27,7 @@
 // yCols - number of columns in the output tensor Y
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledInput>,
+void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>,
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -96,7 +96,7 @@ void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledIn
 // yCols - number of columns in the output tensor Y
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, RowMajorOutput, UnrolledInput>,
+void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnrolledInput>,
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -170,7 +170,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, RowMajorOutput, Unroll
 // yCols - number of columns in the output tensor Y
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput, UnrolledOutput>,
+void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledOutput>,
     const ElementType* W, const ElementType* X, ElementType* Y, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
 {
     //throw std::invalid_argument("Not yet implemented");

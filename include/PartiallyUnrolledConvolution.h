@@ -51,7 +51,7 @@ void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementTy
     Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
 }
 
-// Convolution with partially unrolled input, implicit input padding, row-major input tensor, and row-major output tensor 
+// Convolution with partially unrolled input, implicit input padding, and row-major input, output, and filter tensors 
 //
 // W - 4-dimensional weights tensor in row-major order
 // X - 3-dimensional input tensor in row-major order
@@ -68,7 +68,7 @@ void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementTy
 // yPadLeft - the number of implicit zero-padding columns at the left of the input
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>, 
+void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -123,10 +123,10 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 8, (ElementType)1, 1, 1, (yRows - 1) * yCols - 1, 0);
 }
 
-// Convolution with partially unrolled input, explicit output padding, row-major input tensor, and row-major output tensor  
+// Convolution with partially unrolled input, explicit output padding, and row-major input, output, and filter tensors  
 //
-// W - 4-dimensional weights tensor in filter-major order
-// X - 3-dimensional input tensor in channel-major order
+// W - 4-dimensional weights tensor in row-major order
+// X - 3-dimensional input tensor in row-major order
 // Y - 3-dimensional zero-padded output tensor in row-major order
 // wCount - number of filters in W
 // wRows - number of rows in each filter in W
@@ -140,7 +140,7 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
 // yPadLeft - the number of explicit zero-padding columns at the left of the output
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledInput, RowMajorInput, RowMajorOutput>, 
+void Convolution(ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -184,11 +184,44 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledI
         {
             // partially unroll the input by reshaping
             
-            const ElementType* P = X; // TODO
+            const ElementType* P = X + (wRow * xCols + wCol) * wChls;
 
             // Gemm
         }   
     }   
+
+                // const float* source = X + (wChl * xRows + wRow) * xCols + wCol;
+
+                // // calculate copy target
+                // int uCol = (wRow * wCols + wCol) * wChls + wChl;
+                // float* target = UColMaj.data() + uCol * copySize;
+
+                // // copy from X to U
+                // std::copy(source, source + copySize, target);
+
+    // for (int i = 0; i < _l; ++i)
+    // {
+    //     for (int j = 0; j < _m; ++j)
+    //     {
+    //         Gemm(CBLAS_ORDER::CblasRowMajor,
+    //              CBLAS_TRANSPOSE::CblasNoTrans,
+    //              CBLAS_TRANSPOSE::CblasTrans,
+    //              _a * _b + (_a - 1) * _e,
+    //              _c,
+    //              _n,
+    //              1,
+    //              &X(i, j, 0),
+    //              _n,
+    //              _arrV.data() + (i * _m + j) * _n,
+    //              _l * _m * _n,
+    //              1,
+    //              &_Y(_d / 2, _e / 2, 0),
+    //              _c);
+    //     }
+    // }
+
+
+
 
     // delete the padding
     int deleteSize = (wCols - 1) * wCount;

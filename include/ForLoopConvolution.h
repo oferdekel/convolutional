@@ -25,7 +25,7 @@
 // yCols - number of columns in the output tensor Y
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<RowMajorInput, RowMajorOutput>,
+void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput>,
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
