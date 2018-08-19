@@ -51,14 +51,12 @@ void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementTy
     Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
 }
 
-// Convolution with partially unrolled input, implicit input padding, and row-major input, output, and filter tensors 
+// Convolution with 3x3 receptive field, partially unrolled input, implicit input padding, and row-major input, output, and filter tensors 
 //
 // W - 4-dimensional weights tensor in row-major order
 // X - 3-dimensional input tensor in row-major order
 // Y - 3-dimensional output tensor in row-major order
 // wCount - number of filters in W
-// wRows - number of rows in each filter in W
-// wCols - number of columns in each filter in W
 // wChls - number of channels in each filter in W
 // vStride - vertical stride
 // hStride - horizontal stride
@@ -68,13 +66,11 @@ void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementTy
 // yPadLeft - the number of implicit zero-padding columns at the left of the input
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput>, 
+void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
     int wCount, 
-    int wRows, 
-    int wCols, 
     int wChls, 
     int vStride, 
     int hStride, 
@@ -84,10 +80,6 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     if (hStride != 1 || vStride != 1)
     {
         throw std::invalid_argument("Implicitly Padded Convolution requires hStride = 1 and vStride = 1");
-    }
-    if (wRows != 3 || wCols != 3)
-    {
-        throw std::invalid_argument("This implementation of Convolution is hard-coded for wRows = 3 and wCols = 3");
     }
 
     // allocate P to hold the partially unrolled input
@@ -228,7 +220,7 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledI
 // yPadLeft - the number of implicit zero-padding columns at the left of the input
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, RowMajorOutput, UnrolledInput>, 
+void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, RowMajorFilters, RowMajorOutput, UnrolledInput>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 

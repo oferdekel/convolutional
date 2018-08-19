@@ -42,8 +42,6 @@ void StructuredDelete(ElementType* begin, int skip, int singles, int size,  int 
 // X - 3-dimensional input tensor in channel-major order with implicit zero-padding
 // Y - 3-dimensional output tensor in row-major order
 // wCount - number of filters in W
-// wRows - number of rows in each filter in W
-// wCols - number of columns in each filter in W
 // wChls - number of channels in each filter in W
 // vStride - vertical stride
 // hStride - horizontal stride
@@ -51,13 +49,11 @@ void StructuredDelete(ElementType* begin, int skip, int singles, int size,  int 
 // yCols - number of columns in the output tensor Y
 //
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, UnrolledInput>,
+void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnrolledInput>,
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
     int wCount, 
-    int wRows, 
-    int wCols, 
     int wChls, 
     int vStride, 
     int hStride, 
@@ -67,10 +63,6 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
     if (hStride != 1 || vStride != 1)
     {
         throw std::invalid_argument("Implicitly Padded Convolution requires hStride = 1 and vStride = 1");
-    }
-    if (wRows != 3 || wCols != 3)
-    {
-        throw std::invalid_argument("This implementation of Convolution is hard-coded for wRows = 3 and wCols = 3");
     }
 
     // allocate a column-major matrix U to hold unrolled input

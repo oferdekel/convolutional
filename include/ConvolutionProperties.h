@@ -20,6 +20,7 @@ struct PartiallyUnrolledInput{};
 struct RowMajorFilters{};
 struct RowMajorInput{};
 struct RowMajorOutput{};
+struct ThreeByThreeField{};
 struct UnrolledInput{};
 struct UnrolledOutput{};
 
