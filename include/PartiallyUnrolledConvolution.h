@@ -64,6 +64,7 @@ void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementTy
 // yCols - number of columns in the output tensor Y
 // yPadTop - the number of implicit zero-padding rows at the top of the input
 // yPadLeft - the number of implicit zero-padding columns at the left of the input
+// space - pointer to temporary space of size at least (yRows * yCols * wChls)
 //
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField>, 
@@ -75,16 +76,16 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     int vStride, 
     int hStride, 
     int yRows, 
-    int yCols)
+    int yCols,
+    ElementType* space)
 {
     if (hStride != 1 || vStride != 1)
     {
         throw std::invalid_argument("Implicitly Padded Convolution requires hStride = 1 and vStride = 1");
     }
 
-    // allocate P to hold the partially unrolled input
-    std::vector<ElementType> PRowMaj(yRows * yCols * wChls);
-    ElementType* P = PRowMaj.data();
+    // use temp space to store the partial unrolled input matrix P in row-major order
+    ElementType* P = space;
 
     // unroll input
     // process the TOP LEFT filter position (across all channels)

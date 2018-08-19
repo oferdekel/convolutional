@@ -47,6 +47,7 @@ void StructuredDelete(ElementType* begin, int skip, int singles, int size,  int 
 // hStride - horizontal stride
 // yRows - number of rows in the output tensor Y
 // yCols - number of columns in the output tensor Y
+// space - pointer to temporary space of size at least (9 * wChls * yRows * yCols)
 //
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnrolledInput>,
@@ -58,18 +59,19 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
     int vStride, 
     int hStride, 
     int yRows, 
-    int yCols)
+    int yCols,
+    ElementType* space)
 {
     if (hStride != 1 || vStride != 1)
     {
         throw std::invalid_argument("Implicitly Padded Convolution requires hStride = 1 and vStride = 1");
     }
 
-    // allocate a column-major matrix U to hold unrolled input
+    // use temp space to store the unrolled input matrix U in column-major order
     int uRows = yRows * yCols;
     int uCols = 9 * wChls;
-    std::vector<ElementType> UColMaj(uRows * uCols);
-    ElementType* UColMajBlock = UColMaj.data();
+    ElementType* U = space;
+    ElementType* UColMajBlock = U;
 
     auto blockSize = yCols * yRows * wChls;
 
@@ -118,7 +120,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
     StructuredDelete(UColMajBlock - 1, yCols, yRows - 2, yCols + 1, wChls - 1);
 
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), W, 0, Y);
+    Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, Y);
 }
 
 // Unrolled-input convolution with implicit input padding, with channel-major input tensor and row-major output tensor 
@@ -136,6 +138,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
 // yCols - number of columns in the output tensor Y
 // yPadTop - the number of explicit zero-padding rows at the top of the output
 // yPadLeft - the number of explicit zero-padding columns at the left of the output
+// space - pointer to temporary space of size at least ((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls)
 //
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, RowMajorOutput, UnrolledInput>, 
@@ -151,7 +154,8 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
     int yRows, 
     int yCols, 
     int yPadTop, 
-    int yPadLeft)
+    int yPadLeft,
+    ElementType* space)
 {
     if (hStride != 1 || vStride != 1)
     {
@@ -166,13 +170,14 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
     int xCols = yCols + wCols - 1;
     int xChls = wChls;
 
+    // use temp space to store the unrolled input matrix U in column-major order
     int uRows = yRows * yCols + (yRows - 1) * (wCols - 1);
     int uCols = wRows * wCols * wChls;
+    ElementType* U = space;
 
     const ElementType* VColMaj = W;
     ElementType* ZRowMaj = Y + (xCols * yPadTop + yPadLeft) * wCount;
 
-    std::vector<ElementType> UColMaj(uRows * uCols);
     int copySize = uRows;
 
     // unroll input
@@ -187,7 +192,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
 
                 // calculate copy target
                 int uCol = (wRow * wCols + wCol) * wChls + wChl;
-                float* target = UColMaj.data() + uCol * copySize;
+                float* target = U + uCol * copySize;
 
                 // copy from X to U
                 std::copy(source, source + copySize, target);
@@ -196,7 +201,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
     }   
 
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), W, 0, ZRowMaj);
+    Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, ZRowMaj);
 
     // delete the padding
     int deleteSize = (wCols - 1) * wCount;
@@ -251,6 +256,7 @@ int GetDistFromContent(int xRow, int xCol, int xRows, int xCols, int xPadBottom,
 // yCols - number of columns in the output tensor Y
 // yPadTop - the number of implicit zero-padding rows at the top of the input
 // yPadLeft - the number of implicit zero-padding columns at the left of the input
+// space - pointer to temporary space of size at least ((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls)
 //
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, RowMajorOutput, UnrolledInput>, 
@@ -268,7 +274,8 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     int xPadTop,
     int xPadLeft,
     int yPadTop, 
-    int yPadLeft)
+    int yPadLeft,
+    ElementType* space)
 {
     if (hStride != 1 || vStride != 1)
     {
@@ -283,13 +290,14 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     int xCols = yCols + wCols - 1;
     int xChls = wChls;
 
+    // use temp space to store the unrolled input matrix U in column-major order
     int uRows = yRows * yCols + (yRows - 1) * (wCols - 1);
     int uCols = wRows * wCols * wChls;
+    ElementType* U = space;
 
     const ElementType* VColMaj = W;
     ElementType* ZRowMaj = Y + (xCols * yPadTop + yPadLeft) * wCount;
 
-    std::vector<ElementType> UColMaj(uRows * uCols);
     int copySize = uRows;
 
     // unroll input
@@ -308,7 +316,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
 
                 // calculate copy target
                 int uCol = (wRow * wCols + wCol) * wChls + wChl;
-                float* target = UColMaj.data() + uCol * copySize;
+                float* target = U + uCol * copySize;
 
                 // copy from X to U
                 std::copy(source + distToContent, source + copySize - distFromContent, target + distToContent);
@@ -317,7 +325,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     }   
 
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, wCount, uCols, 1, UColMaj.data(), W, 0, ZRowMaj);
+    Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, ZRowMaj);
 
     // delete the padding
     int deleteSize = (wCols - 1) * wCount;

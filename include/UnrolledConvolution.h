@@ -25,6 +25,7 @@
 // hStride - horizontal stride
 // yRows - number of rows in the output tensor Y
 // yCols - number of columns in the output tensor Y
+// space - pointer to temporary space of size at least (wRows * wCols * wChls * yRows * yCols)
 //
 template <typename ElementType>
 void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>,
@@ -38,21 +39,23 @@ void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMaj
     int vStride, 
     int hStride, 
     int yRows, 
-    int yCols)
+    int yCols,
+    ElementType* space)
 {
     int xRows = (yRows - 1) * vStride + wRows;
     int xCols = (yCols - 1) * hStride + wCols;
     int xChls = wChls;
 
+    // use temp space to store the unrolled input matrix U in row-major order
     int uRows = yRows * yCols;
     int uCols = wRows * wCols * wChls;
-    int vCols = wCount;
+    ElementType* U = space;
 
+    int vCols = wCount;
     const ElementType* VColMaj = W;
+    
     ElementType* ZRowMaj = Y;
 
-    // allocate a column-major matrix U to hold unrolled input
-    std::vector<ElementType> URowMaj(uRows * uCols);
     int copySize = wCols * wChls;
 
     // unroll input
@@ -69,7 +72,7 @@ void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMaj
 
                 // calculate copy target
                 int uRow = yRow * yCols + yCol;
-                float* target = URowMaj.data() + (uRow * wRows + wRow) * copySize;
+                float* target = U + (uRow * wRows + wRow) * copySize;
 
                 // copy from X to U
                 std::copy(source, source + copySize, target);
@@ -78,7 +81,7 @@ void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMaj
     }   
 
     // matrix-matrix multiply
-    Gemm(true, false, true, uRows, vCols, uCols, 1, URowMaj.data(), VColMaj, 0, ZRowMaj);
+    Gemm(true, false, true, uRows, vCols, uCols, 1, U, VColMaj, 0, ZRowMaj);
 }
 
 // Unrolled-input convolution with channel-major input tensor and row-major output tensor 
@@ -94,6 +97,7 @@ void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMaj
 // hStride - horizontal stride
 // yRows - number of rows in the output tensor Y
 // yCols - number of columns in the output tensor Y
+// space - pointer to temporary space of size at least (wRows * wCols * wChls * yRows * yCols)
 //
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnrolledInput>,
@@ -107,7 +111,8 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Ro
     int vStride, 
     int hStride, 
     int yRows, 
-    int yCols)
+    int yCols,
+    ElementType* space)
 {
     if (hStride != 1)
     {
@@ -117,15 +122,16 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Ro
     int xRows = (yRows - 1) * vStride + wRows;
     int xCols = yCols + wCols - 1;
 
+    // use temp space to store the unrolled input matrix U in column-major order
     int uRows = yRows * yCols;
     int uCols = wRows * wCols * wChls;
+    ElementType* U = space;
+
     int vCols = wCount;
 
     const ElementType* VColMaj = W;
     ElementType* ZRowMaj = Y;
 
-    // allocate a column-major matrix U to hold unrolled input
-    std::vector<ElementType> UColMaj(uRows * uCols);
     int copySize = yCols;
 
     // unroll input
@@ -142,7 +148,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Ro
                     
                     // calculate copy target
                     int uCol =  (wRow * wCols + wCol) * wChls + wChl;
-                    ElementType* target = UColMaj.data() + (uCol * yRows + yRow) * yCols;
+                    ElementType* target = U + (uCol * yRows + yRow) * yCols;
 
                     // copy from X to U
                     std::copy(source, source + copySize, target);
@@ -152,7 +158,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Ro
     }   
 
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, vCols, uCols, 1, UColMaj.data(), VColMaj, 0, ZRowMaj);
+    Gemm(false, false, true, uRows, vCols, uCols, 1, U, VColMaj, 0, ZRowMaj);
 }
 
 // Unrolled-output convolution with row-major input tensor and row-major output tensor 
@@ -175,13 +181,14 @@ void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMaj
 {
     //throw std::invalid_argument("Not yet implemented");
 
+    // TODO - use externally allocated memory
+
     int xRows = (yRows - 1) * vStride + wRows;
     int xCols = yCols + wCols - 1;
 
     int uRows = xRows * xCols;
     int uCols = wChls;
     int vCols = wCount * wRows * wCols;
-
 
     // matrix-matrix multiply
     std::vector<ElementType> UColMaj(uRows * vCols);
