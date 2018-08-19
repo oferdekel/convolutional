@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 
     // for loop convolution
     std::cout << "for loop convolution" << std::endl;
-    RunTest([&]() -> Tensor<float,3>
+    RunTest([&]()
     {
         auto properties = ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 
     // unrolled convolutions
     std::cout << "unrolled convolutions" << std::endl;
-    RunTest([&]() -> Tensor<float,3>
+    RunTest([&]()
     {
         auto properties = ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
@@ -142,7 +142,7 @@ int main(int argc, char** argv)
         return YRowMaj;
     });
 
-    RunTest([&]() -> Tensor<float,3>
+    RunTest([&]()
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
         return YRowMaj;
     });
 
-    RunTest([&]() -> Tensor<float,3>
+    RunTest([&]()
     {
         auto properties = ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledOutput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
@@ -160,7 +160,7 @@ int main(int argc, char** argv)
 
     // padded convolutions
     std::cout << "padded convolutions" << std::endl;
-    RunTest([&]() -> Tensor<float,3>
+    RunTest([&]()
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
         return YRowMaj;
     });
 
-    RunTest([&]() -> Tensor<float,3>
+    RunTest([&]()
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
@@ -176,7 +176,7 @@ int main(int argc, char** argv)
         return YRowMaj;
     });
 
-    RunTest([&]() -> Tensor<float,3>
+    RunTest([&]()
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
@@ -186,7 +186,7 @@ int main(int argc, char** argv)
 
     // partially unrolled convolutions
     std::cout << "partially unrolled convolutions" << std::endl;
-    RunTest([&]() -> Tensor<float,3>
+    RunTest([&]()
     {
         auto properties = ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
@@ -194,7 +194,7 @@ int main(int argc, char** argv)
         return YRowMaj;
     });
 
-    RunTest([&]() -> Tensor<float,3>
+    RunTest([&]()
     {
         auto properties = ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
@@ -202,7 +202,7 @@ int main(int argc, char** argv)
         return YRowMaj;
     });
 
-    RunTest([&]() -> Tensor<float,3>
+    RunTest([&]()
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, RowMajorFilters, RowMajorOutput, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
