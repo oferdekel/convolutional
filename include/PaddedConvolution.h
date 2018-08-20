@@ -22,30 +22,7 @@
 // * input tensor in channel-major order, with an implicit row/col of zero-padding on the top/bottom/left/right
 // * output tensor in row-major order
 // * requires temporary space of size (9 * wChls * yRows * yCols)
-
-// Structured delete subroutine
-template <typename ElementType>
-void StructuredDelete(ElementType* begin, int skip, int singles, int size,  int intervals)
-{
-    begin += skip;
-    for(int i = 0; i < singles; ++i)
-    {
-        *begin = 0;
-        begin += skip;
-    }
-
-    for(int j = 0; j < intervals; ++j)
-    {
-        std::fill_n(begin, size, (ElementType)0);
-        begin += size + skip - 1;
-        for(int i = 0; i < singles; ++i)
-        {
-            *begin = 0;
-            begin += skip;
-        } 
-    }
-}
-
+//
 // W - 4-dimensional weights tensor in filter-major order, which represents 3x3 filters 
 // X - 3-dimensional input tensor in channel-major order with implicit zero-padding
 // Y - 3-dimensional output tensor in row-major order
@@ -69,53 +46,61 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
     int uRows = yRows * yCols;
     int uCols = 9 * wChls;
     ElementType* U = space;
-    ElementType* UColMajBlock = U;
 
     auto blockSize = yCols * yRows * wChls;
 
-    // unroll input
-    // input block corresponding to TOP LEFT filter elements (across all channels)
-    std::copy(X, X + blockSize - yCols - 1, UColMajBlock + yCols + 1);
-    StructuredDelete(UColMajBlock + yCols, yCols, yRows - 2, yCols + 1, wChls - 1);
-    UColMajBlock += blockSize;
+    auto processFilterPosition = [&](int position, int xOffset, int xSizeOffset, int uOffset, int skip, int singles, int size, int intervals)
+    {
+        // copy input from X into U
+        ElementType* ptr = U + position * blockSize + uOffset;
+        std::copy(X + xOffset, X + blockSize + xOffset + xSizeOffset, ptr);
+        
+        // structured delete of unneeded elements
+        ptr += skip - 1;
+        for(int i = 0; i < singles; ++i)
+        {
+            *ptr = 0;
+            ptr += skip;
+        }
 
-    // input block corresponding to TOP CENTER filter elements (across all channels)
-    std::copy(X, X + blockSize - yCols, UColMajBlock + yCols);
-    StructuredDelete(UColMajBlock + yCols - 1, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
-    UColMajBlock += blockSize;
+        for(int j = 0; j < intervals; ++j)
+        {
+            std::fill_n(ptr, size, (ElementType)0);
+            ptr += size + skip - 1;
+            for(int i = 0; i < singles; ++i)
+            {
+                *ptr = 0;
+                ptr += skip;
+            } 
+        }
+    }; 
 
-    // input block corresponding to TOP RIGHT filter elements (across all channels)
-    std::copy(X + 1, X + blockSize - yCols, UColMajBlock + yCols);
-    StructuredDelete(UColMajBlock + yCols - 1, yCols, yRows - 2, yCols + 1, wChls - 1);
-    UColMajBlock += blockSize;
+    // unroll input block corresponding to TOP LEFT filter elements (across all channels)
+    processFilterPosition(0, 0, -yCols - 1, yCols + 1, yCols, yRows - 2, yCols + 1, wChls - 1);
 
-    // input block corresponding to MID LEFT filter elements (across all channels)
-    std::copy(X, X + blockSize - 1, UColMajBlock + 1);
-    StructuredDelete(UColMajBlock, yCols, yRows * wChls - 1, 0, 0);
-    UColMajBlock += blockSize;
+    // unroll input block corresponding to TOP CENTER filter elements (across all channels)
+    processFilterPosition(1, 0, -yCols, yCols, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
 
-    // input block corresponding to MID CENTER filter elements (across all channels)
-    std::copy(X, X + blockSize, UColMajBlock);
-    UColMajBlock += blockSize;
+    // unroll input block corresponding to TOP RIGHT filter elements (across all channels)
+    processFilterPosition(2, 1, -yCols - 1, yCols, yCols, yRows - 2, yCols + 1, wChls - 1);
 
-    // input block corresponding to MID RIGHT filter elements (across all channels)
-    std::copy(X + 1, X + blockSize, UColMajBlock);
-    StructuredDelete(UColMajBlock - 1, yCols, yRows * wChls - 1, 0, 0);
-    UColMajBlock += blockSize;
+    // unroll input block corresponding to MID LEFT filter elements (across all channels)
+    processFilterPosition(3, 0, -1, 1, yCols, yRows * wChls - 1, 0, 0);
 
-    // input block corresponding to BOTTOM LEFT filter elements (across all channels)
-    std::copy(X + yCols, X + blockSize - 1, UColMajBlock + 1);
-    StructuredDelete(UColMajBlock, yCols, yRows - 2, yCols + 1, wChls - 1);
-    UColMajBlock += blockSize;
+    // unroll input block corresponding to MID CENTER filter elements (across all channels)
+    std::copy(X, X + blockSize, U + 4 * blockSize);
 
-    // input block corresponding to BOTTOM CENTER filter elements (across all channels)
-    std::copy(X + yCols, X + blockSize, UColMajBlock);
-    StructuredDelete(UColMajBlock - 1, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
-    UColMajBlock += blockSize;
+    // unroll input block corresponding to MID RIGHT filter elements (across all channels)
+    processFilterPosition(5, 1, -1, 0,  yCols, yRows * wChls - 1, 0, 0);
 
-    // input block corresponding to BOTTOM RIGHT filter elements (across all channels)
-    std::copy(X + yCols + 1, X + blockSize, UColMajBlock);
-    StructuredDelete(UColMajBlock - 1, yCols, yRows - 2, yCols + 1, wChls - 1);
+    // unroll input block corresponding to BOTTOM LEFT filter elements (across all channels)
+    processFilterPosition(6, yCols, -yCols - 1, 1, yCols, yRows - 2, yCols + 1, wChls - 1);
+
+    // unroll input block corresponding to BOTTOM CENTER filter elements (across all channels)
+    processFilterPosition(7, yCols, -yCols, 0, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
+
+    // unroll input block corresponding to BOTTOM RIGHT filter elements (across all channels)
+    processFilterPosition(8, yCols + 1, -yCols - 1, 0,  yCols, yRows - 2, yCols + 1, wChls - 1);
 
     // matrix-matrix multiply
     Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, Y);
