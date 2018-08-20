@@ -49,7 +49,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
 
     auto blockSize = yCols * yRows * wChls;
 
-    auto processFilterPosition = [&](int position, int xOffset, int xSizeOffset, int uOffset, int skip, int singles, int size, int intervals)
+    auto ProcessFilterPosition = [&](int position, int xOffset, int xSizeOffset, int uOffset, int skip, int singles, int size, int intervals)
     {
         // copy input from X into U
         ElementType* ptr = U + position * blockSize + uOffset;
@@ -75,32 +75,32 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
         }
     }; 
 
-    // unroll input block corresponding to TOP LEFT filter elements (across all channels)
-    processFilterPosition(0, 0, -yCols - 1, yCols + 1, yCols, yRows - 2, yCols + 1, wChls - 1);
+    // unroll input block corresponding to TOP LEFT filter elements across all channels
+    ProcessFilterPosition(0, 0, -yCols - 1, yCols + 1, yCols, yRows - 2, yCols + 1, wChls - 1);
 
-    // unroll input block corresponding to TOP CENTER filter elements (across all channels)
-    processFilterPosition(1, 0, -yCols, yCols, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
+    // unroll input block corresponding to TOP CENTER filter elements across all channels
+    ProcessFilterPosition(1, 0, -yCols, yCols, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
 
-    // unroll input block corresponding to TOP RIGHT filter elements (across all channels)
-    processFilterPosition(2, 1, -yCols - 1, yCols, yCols, yRows - 2, yCols + 1, wChls - 1);
+    // unroll input block corresponding to TOP RIGHT filter elements across all channels
+    ProcessFilterPosition(2, 1, -yCols - 1, yCols, yCols, yRows - 2, yCols + 1, wChls - 1);
 
-    // unroll input block corresponding to MID LEFT filter elements (across all channels)
-    processFilterPosition(3, 0, -1, 1, yCols, yRows * wChls - 1, 0, 0);
+    // unroll input block corresponding to MID LEFT filter elements across all channels
+    ProcessFilterPosition(3, 0, -1, 1, yCols, yRows * wChls - 1, 0, 0);
 
-    // unroll input block corresponding to MID CENTER filter elements (across all channels)
+    // unroll input block corresponding to MID CENTER filter elements across all channels
     std::copy(X, X + blockSize, U + 4 * blockSize);
 
-    // unroll input block corresponding to MID RIGHT filter elements (across all channels)
-    processFilterPosition(5, 1, -1, 0,  yCols, yRows * wChls - 1, 0, 0);
+    // unroll input block corresponding to MID RIGHT filter elements across all channels
+    ProcessFilterPosition(5, 1, -1, 0,  yCols, yRows * wChls - 1, 0, 0);
 
-    // unroll input block corresponding to BOTTOM LEFT filter elements (across all channels)
-    processFilterPosition(6, yCols, -yCols - 1, 1, yCols, yRows - 2, yCols + 1, wChls - 1);
+    // unroll input block corresponding to BOTTOM LEFT filter elements across all channels
+    ProcessFilterPosition(6, yCols, -yCols - 1, 1, yCols, yRows - 2, yCols + 1, wChls - 1);
 
-    // unroll input block corresponding to BOTTOM CENTER filter elements (across all channels)
-    processFilterPosition(7, yCols, -yCols, 0, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
+    // unroll input block corresponding to BOTTOM CENTER filter elements across all channels
+    ProcessFilterPosition(7, yCols, -yCols, 0, yCols * (yRows - 1) + 1, 0, yCols, wChls - 1);
 
-    // unroll input block corresponding to BOTTOM RIGHT filter elements (across all channels)
-    processFilterPosition(8, yCols + 1, -yCols - 1, 0,  yCols, yRows - 2, yCols + 1, wChls - 1);
+    // unroll input block corresponding to BOTTOM RIGHT filter elements across all channels
+    ProcessFilterPosition(8, yCols + 1, -yCols - 1, 0,  yCols, yRows - 2, yCols + 1, wChls - 1);
 
     // matrix-matrix multiply
     Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, Y);
@@ -115,49 +115,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
 // * input tensor in row-major order, with an implicit row/col of zero-padding on the top/bottom/left/right
 // * output tensor in row-major order
 // * requires temporary space of size (wChls * yRows * yCols)
-
-template <typename ElementType>
-void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementType* P, ElementType* Y,  int wCount, int wChls,int yCols, int position, ElementType beta, int xRow, int xCol, int pRows, int yRow)
-{
-    int pCols = wChls;
-    int vCols = wCount;
-    int vSize = wChls * wCount;
-
-    // copy the relevant part of X into the partial unrolled-input matrix P
-    const ElementType* source = X + (xRow * yCols + xCol) * wChls; 
-    int copySize = pRows * pCols;
-    std::copy(source, source + copySize, P);
-
-    // delete unwanted values from P
-    for(int pRow = yCols - 1; pRow < pRows; pRow += yCols)
-    {
-        std::fill_n(P + pRow * pCols, pCols, (ElementType)0);
-    }
-
-    // define relevant submatrices of W and Y
-    const ElementType* V = W + position * vSize;
-    ElementType* Z = Y + yRow * vCols;
-
-    // multiply
-    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
-}
-
-template <typename ElementType>
-void ProcessFilterPosition(const ElementType* W, const ElementType* X, ElementType* Y,  int wCount, int wChls, int yCols, int position, int xRow, int xCol, int pRows, int yRow)
-{
-    int pCols = wChls;
-    int vSize = wChls * wCount;
-    int vCols = wCount;
-
-    // define relevant submatrices of X, W, and Y
-    const ElementType* P = X + (xRow * yCols + xCol) * wChls; 
-    const ElementType* V = W + position * vSize;
-    ElementType* Z = Y + yRow * vCols;
-
-    // multiply
-    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
-}
-
+//
 // W - 4-dimensional weights tensor in row-major order
 // X - 3-dimensional input tensor in row-major order
 // Y - 3-dimensional output tensor in row-major order
@@ -182,33 +140,70 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     // use temp space to store the partial unrolled input matrix P in row-major order
     ElementType* P = space;
 
+    int pCols = wChls;
+    int vCols = wCount;
+    int vSize = wChls * wCount;
+
+    auto ProcessFilterPositionByReshape = [&](int position, int xRow, int xCol, int pRows, int yRow)
+    {
+        // reference (reshape) relevant part of X
+        const ElementType* P = X + (xRow * yCols + xCol) * wChls; 
+
+        // define relevant submatrices of W and Y
+        const ElementType* V = W + position * vSize;
+        ElementType* Z = Y + yRow * vCols;
+
+        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
+    };
+
+    auto ProcessFilterPositionByCopy = [&](int position, ElementType beta, int xRow, int xCol, int pRows, int yRow)
+    {
+        // copy the relevant part of X into the partial unrolled-input matrix P
+        const ElementType* source = X + (xRow * yCols + xCol) * wChls; 
+        int copySize = pRows * pCols;
+        std::copy(source, source + copySize, P);
+
+        // delete unwanted values from P
+        for(int pRow = yCols - 1; pRow < pRows; pRow += yCols)
+        {
+            std::fill_n(P + pRow * pCols, pCols, (ElementType)0);
+        }
+
+        // define relevant submatrices of W and Y
+        const ElementType* V = W + position * vSize;
+        ElementType* Z = Y + yRow * vCols;
+
+        // multiply
+        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
+    };
+
     // unroll input
-    // process the TOP LEFT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 0, (ElementType)0, 0, 0, (yRows - 1) * yCols - 1, yCols + 1);
+    // process the TOP LEFT filter position across all channels
+    ProcessFilterPositionByCopy(0, (ElementType)0, 0, 0, (yRows - 1) * yCols - 1, yCols + 1);
 
-    // process the TOP CENTER filter position (across all channels)
-    ProcessFilterPosition(W, X, Y, wCount, wChls, yCols, 1, 0, 0, (yRows - 1) * yCols, yCols);
+    // process the TOP CENTER filter position across all channels
+    ProcessFilterPositionByReshape(1, 0, 0, (yRows - 1) * yCols, yCols);
 
-    // process the TOP RIGHT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 2, (ElementType)1, 0, 1, (yRows - 1) * yCols - 1, yCols);
+    // process the TOP RIGHT filter position across all channels
+    ProcessFilterPositionByCopy(2, (ElementType)1, 0, 1, (yRows - 1) * yCols - 1, yCols);
 
-    // process the MID LEFT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 3, (ElementType)1, 0, 0, yRows * yCols - 1, 1);
+    // process the MID LEFT filter position across all channels
+    ProcessFilterPositionByCopy(3, (ElementType)1, 0, 0, yRows * yCols - 1, 1);
 
-    // process the MID CENTER filter position (across all channels)
-    ProcessFilterPosition(W, X, Y, wCount, wChls, yCols, 4, 0, 0, yRows * yCols, 0);
+    // process the MID CENTER filter position across all channels
+    ProcessFilterPositionByReshape(4, 0, 0, yRows * yCols, 0);
 
-    // process the MID RIGHT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 5, (ElementType)1, 0, 1, yRows * yCols - 1, 0);
+    // process the MID RIGHT filter position across all channels
+    ProcessFilterPositionByCopy(5, (ElementType)1, 0, 1, yRows * yCols - 1, 0);
 
-    // process the BOTTOM LEFT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 6, (ElementType)1, 1, 0, (yRows - 1) * yCols - 1, 1);
+    // process the BOTTOM LEFT filter position across all channels
+    ProcessFilterPositionByCopy(6, (ElementType)1, 1, 0, (yRows - 1) * yCols - 1, 1);
 
-    // process the BOTTOM CENTER filter position (across all channels)
-    ProcessFilterPosition(W, X, Y, wCount, wChls, yCols, 7, 1, 0, (yRows - 1) * yCols, 0);
+    // process the BOTTOM CENTER filter position across all channels
+    ProcessFilterPositionByReshape(7, 1, 0, (yRows - 1) * yCols, 0);
 
-    // process the BOTTOM RIGHT filter position (across all channels)
-    ProcessFilterPosition(W, X, P, Y, wCount, wChls, yCols, 8, (ElementType)1, 1, 1, (yRows - 1) * yCols - 1, 0);
+    // process the BOTTOM RIGHT filter position across all channels
+    ProcessFilterPositionByCopy(8, (ElementType)1, 1, 1, (yRows - 1) * yCols - 1, 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -220,7 +215,7 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
 // * input tensor in channel-major order
 // * output tensor in row-major order with (wRows - 1)/2 explicit padding rows on the top/bottom and (wCols - 1)/2 explicit padding columns on the left/right
 // * requires temporary space of size ((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls)
-
+//
 // W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in channel-major order
 // Y - 3-dimensional zero-padded output tensor in row-major order
