@@ -13,7 +13,6 @@
 #include "ConvolutionProperties.h"
 #include "ForLoopConvolution.h"
 #include "PaddedConvolution.h"
-#include "PartiallyUnrolledConvolution.h"
 #include "UnrolledConvolution.h"
 #include "Tensor.h"
 #include "TestHelpers.h"
@@ -164,28 +163,28 @@ int main(int argc, char** argv)
     std::cout << "padded convolutions" << std::endl;
     RunTest([&]()
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnrolledInput>{};
+        auto properties = ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnitStride, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
         std::vector<float> space(9 * wChls * yRows * yCols);
-        Convolution(properties, WFilMaj.Data(), XChlMajImp.Data(), YRowMaj.Data(), wCount, wChls, vStride, hStride, yRows, yCols, space.data());
+        Convolution(properties, WFilMaj.Data(), XChlMajImp.Data(), YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
         return YRowMaj;
     });
 
     RunTest([&]()
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, RowMajorOutput, UnrolledInput>{};
+        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitStride, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
         std::vector<float> space((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
-        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft, space.data());
+        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, yRows, yCols, space.data());
         return YRowMaj;
     });
 
     RunTest([&]()
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, RowMajorOutput, UnrolledInput>{};
+        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitStride, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
         std::vector<float> space((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
-        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft, xPadTop, xPadLeft,space.data());
+        Convolution(properties, WFilMaj.Data(), XChlMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft, space.data());
         return YRowMaj;
     });
 
@@ -193,26 +192,26 @@ int main(int argc, char** argv)
     std::cout << "partially unrolled convolutions" << std::endl;
     RunTest([&]()
     {
-        auto properties = ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField>{};
+        auto properties = ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitStride>{};
         auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
         std::vector<float> space(yRows * yCols * wChls);
-        Convolution(properties, WRowMaj.Data(), XRowMajImp.Data(), YRowMaj.Data(), wCount, wChls, vStride, hStride, yRows, yCols, space.data());
+        Convolution(properties, WRowMaj.Data(), XRowMajImp.Data(), YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
         return YRowMaj;
     });
 
     RunTest([&]()
     {
-        auto properties = ConvolutionProperties<ExplicitOutputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput>{};
+        auto properties = ConvolutionProperties<ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitStride>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
+        Convolution(properties, WRowMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, yRows, yCols);
         return YRowMaj;
     });
 
     RunTest([&]()
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, RowMajorFilters, RowMajorOutput, UnrolledInput>{};
+        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, RowMajorFilters, RowMajorOutput, UnitStride, UnrolledInput>{};
         auto YRowMaj = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
-        Convolution(properties, WRowMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, xPadTop, xPadLeft);
+        Convolution(properties, WRowMaj.Data(), XRowMajExp.Data(), YRowMaj.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft);
         return YRowMaj;
     });
 

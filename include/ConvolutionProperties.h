@@ -16,11 +16,13 @@ struct ExplicitInputPadding{};
 struct ExplicitOutputPadding{};
 struct FilterMajorFilters{};
 struct ImplicitInputPadding{};
+struct OddField{};              // number of filter rows must be odd, number of filter columns must be odd
 struct PartiallyUnrolledInput{};
 struct RowMajorFilters{};
 struct RowMajorInput{};
 struct RowMajorOutput{};
-struct ThreeByThreeField{};
+struct ThreeByThreeField{};     // number of filter rows and columns equals three
+struct UnitStride{};            // horizontal stride and vertical stride equal 1
 struct UnrolledInput{};
 struct UnrolledOutput{};
 

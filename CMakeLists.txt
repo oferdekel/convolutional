@@ -6,8 +6,8 @@ set(target_name convolutional)
 set(include
     include/BlasHelpers.h
     include/ConvolutionProperties.h
+    include/CSVParser.h
     include/ForLoopConvolution.h
-    include/PartiallyUnrolledConvolution.h
     include/Tensor.h
     include/TestHelpers.h
     include/UnrolledConvolution.h
