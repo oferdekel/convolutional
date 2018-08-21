@@ -562,14 +562,14 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
             distFromContent = xCol - firstRightPadCol + 1;
         }
 
-        // perform matrix multiplication
-        int pBlockRows = pRows;
-        const ElementType* PBlock = X + (wRow * xCols + wCol) * xChls;
-
+        // define submatrices with nonzero content
+        int pContentRows = pRows - distToContent - distFromContent;
+        const ElementType* PContent = X + (wRow * xCols + wCol + distToContent) * xChls;
         const ElementType* V = W + (wRow * wCols + wCol) * vSize;
-        ElementType* ZBlock = Z + 0;
+        ElementType* ZContent = Z + distToContent * vCols;
         
-        Gemm(true, true, true, pBlockRows, vCols, pCols, 1, PBlock, V, beta, Z);
+        // perform matrix multiplication
+        Gemm(true, true, true, pContentRows, vCols, pCols, 1, PContent, V, beta, ZContent);
     };
 
     ProcessFilterPosition(0, 0, 0);
