@@ -138,9 +138,9 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     ElementType* space)
 {
     // use temp space to store the partial unrolled input matrix P in row-major order
+    int pCols = wChls;
     ElementType* P = space;
 
-    int pCols = wChls;
     int vCols = wCount;
     int vSize = wChls * wCount;
 
@@ -292,12 +292,12 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
 // 2D Tensor Convolution
 // * supports only odd number of filter rows and columns
 // * supports only horizontal and vertical stride of 1
-// * unrolled input 
+// * partially unrolled input 
 // * filters in row-major order
 // * input tensor in row-major order
 // * output tensor in row-major order with (wRows - 1)/2 explicit padding rows on the top/bottom and (wCols - 1)/2 explicit padding columns on the left/right
 // * requires no temporary space
-
+//
 // W - 4-dimensional weights tensor in row-major order
 // X - 3-dimensional input tensor in row-major order
 // Y - 3-dimensional zero-padded output tensor in row-major order
@@ -319,7 +319,6 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, OddField, Partiall
     int yRows, 
     int yCols)
 {
-
     int xRows = yRows + wRows - 1;
     int xCols = yCols + wCols - 1;
     int xChls = wChls;
@@ -337,27 +336,25 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, OddField, Partiall
     const ElementType* VColMaj = W;
     ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
 
-    int copySize = pRows;
+    auto ProcessFilterPosition = [&](int wRow, int wCol, ElementType beta)
+    {
+        const ElementType* P = X + (wRow * xCols + wCol) * xChls;
+        const ElementType* V = W + (wRow * wCols + wCol) * vSize;
+        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
+    };
 
-    // unroll input
-    const ElementType* P = X;
-    const ElementType* V = W;
-    Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 0, Z);
+    ProcessFilterPosition(0, 0, 0);
 
     for(int wCol = 1; wCol < wCols; ++wCol) 
     {
-        P = X + wCol * xChls;
-        V += vSize;
-        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
-    }   
+        ProcessFilterPosition(0, wCol, 1);
+    }
 
     for(int wRow = 1; wRow < wRows; ++wRow) 
     {
         for(int wCol = 0; wCol < wCols; ++wCol) 
         {
-            P = X + (wRow * xCols + wCol) * xChls;
-            V += vSize;
-            Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
+            ProcessFilterPosition(wRow, wCol, 1);
         }   
     }   
 
@@ -379,35 +376,7 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, OddField, Partiall
 // * input tensor in channel-major order with any number of explicit padding rows on the top/bottom and explicit padding columns on the left/right
 // * output tensor in row-major order with (wRows - 1)/2 explicit padding rows on the top/bottom and (wCols - 1)/2 explicit padding columns on the left/right
 // * requires temporary space of size ((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls)
-
-int GetDistToContent(int xRow, int xCol, int xRows, int xCols, int xPadTop, int xPadLeft)
-{
-    if(xRow < xPadTop)
-    {
-        return (xPadTop - xRow) * xCols + xPadLeft - xCol;
-    }
-    if(xCol < xPadLeft)
-    {
-        return xPadLeft - xCol;
-    }
-    return 0;
-}
-
-int GetDistFromContent(int xRow, int xCol, int xRows, int xCols, int xPadBottom, int xPadRight)
-{
-    int firstBottomPadRow = xRows - xPadBottom;
-    if(xRow >= firstBottomPadRow)
-    {
-        return (xRow - firstBottomPadRow) * xCols + xPadRight + xCol + 1;
-    }
-    int firstRightPadCol = xCols - xPadRight;
-    if(xCol >= firstRightPadCol)
-    {
-        return xCol - firstRightPadCol + 1;
-    }
-    return 0;
-}
-
+//
 // W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in channel-major order
 // Y - 3-dimensional output tensor in row-major order
@@ -437,10 +406,11 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
 {
     int xRows = yRows + wRows - 1;
     int xCols = yCols + wCols - 1;
-    int xChls = wChls;
 
     int yPadTop = (wRows - 1) / 2;
     int yPadLeft = (wCols - 1) / 2;
+    int xPadBottom = xPadTop;
+    int xPadRight = xPadLeft;
 
     // use temp space to store the unrolled input matrix U in column-major order
     int uRows = yRows * yCols + (yRows - 1) * (wCols - 1);
@@ -457,9 +427,31 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     {
         for(int wCol = 0; wCol < wCols; ++wCol) 
         {
+            int xRow = wRow;
+            int xCol = wCol;
+
             // get distances
-            int distToContent = GetDistToContent(wRow, wCol, xRows, xCols, xPadTop, xPadLeft);
-            int distFromContent = GetDistFromContent(wRow, wCol, xRows, xCols, xPadTop, xPadLeft);
+            int distToContent = 0;
+            if(xRow < xPadTop)
+            {
+                distToContent = (xPadTop - xRow) * xCols + xPadLeft - xCol;
+            }
+            else if(xCol < xPadLeft)
+            {
+                distToContent = xPadLeft - xCol;
+            }
+            
+            int distFromContent = 0;
+            int firstBottomPadRow = xRows - xPadBottom;
+            int firstRightPadCol = xCols - xPadRight;
+            if(xRow >= firstBottomPadRow)
+            {
+                distFromContent = (xRow - firstBottomPadRow) * xCols + xPadRight + xCol + 1;
+            }
+            else if(xCol >= firstRightPadCol)
+            {
+                distFromContent = xCol - firstRightPadCol + 1;
+            }
 
             for(int wChl = 0; wChl < wChls; ++wChl) 
             {
@@ -497,7 +489,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
 // * input tensor in row-major order with any number of explicit padding rows on the top/bottom and explicit padding columns on the left/right
 // * output tensor in row-major order with (wRows - 1)/2 explicit padding rows on the top/bottom and (wCols - 1)/2 explicit padding columns on the left/right
 // * requires no temporary space 
-
+//
 // W - 4-dimensional weights tensor in row-major order
 // X - 3-dimensional input tensor in channel-major order
 // Y - 3-dimensional output tensor in row-major order
@@ -523,5 +515,83 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     int xPadTop, 
     int xPadLeft)
 {
-        throw std::invalid_argument("Not yet implemented");  
+    int xRows = yRows + wRows - 1;
+    int xCols = yCols + wCols - 1;
+    int xChls = wChls;
+
+    int yPadTop = (wRows - 1) / 2;
+    int yPadLeft = (wCols - 1) / 2;
+    int xPadBottom = xPadTop;
+    int xPadRight = xPadLeft;
+
+    int vCols = wCount;
+    int vSize = wChls * wCount;
+
+    // allocate P to hold the partially unrolled input
+    int pRows = yRows * yCols + (yRows - 1) * (wCols - 1);
+    int pCols = wChls;
+
+    const ElementType* VColMaj = W;
+    ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
+
+    auto ProcessFilterPosition = [&](int wRow, int wCol, ElementType beta)
+    {
+        int xRow = wRow;
+        int xCol = wCol;
+
+        // get distances
+        int distToContent = 0;
+        if(xRow < xPadTop)
+        {
+            distToContent = (xPadTop - xRow) * xCols + xPadLeft - xCol;
+        }
+        else if(xCol < xPadLeft)
+        {
+            distToContent = xPadLeft - xCol;
+        }
+        
+        int distFromContent = 0;
+        int firstBottomPadRow = xRows - xPadBottom;
+        int firstRightPadCol = xCols - xPadRight;
+        if(xRow >= firstBottomPadRow)
+        {
+            distFromContent = (xRow - firstBottomPadRow) * xCols + xPadRight + xCol + 1;
+        }
+        else if(xCol >= firstRightPadCol)
+        {
+            distFromContent = xCol - firstRightPadCol + 1;
+        }
+
+        // perform matrix multiplication
+        int pBlockRows = pRows;
+        const ElementType* PBlock = X + (wRow * xCols + wCol) * xChls;
+
+        const ElementType* V = W + (wRow * wCols + wCol) * vSize;
+        ElementType* ZBlock = Z + 0;
+        
+        Gemm(true, true, true, pBlockRows, vCols, pCols, 1, PBlock, V, beta, Z);
+    };
+
+    ProcessFilterPosition(0, 0, 0);
+
+    for(int wCol = 1; wCol < wCols; ++wCol) 
+    {
+        ProcessFilterPosition(0, wCol, 1);
+    }
+
+    for(int wRow = 1; wRow < wRows; ++wRow) 
+    {
+        for(int wCol = 0; wCol < wCols; ++wCol) 
+        {
+            ProcessFilterPosition(wRow, wCol, 1);
+        }   
+    }   
+
+    // delete the padding
+    int deleteSize = (wCols - 1) * wCount;
+    for(int yRow = 0; yRow < yRows - 1; ++yRow)
+    {
+        ElementType* begin = Z + (yCols + xCols * yRow) * wCount;
+        std::fill(begin, begin + deleteSize, (ElementType)0);
+    }
 }
