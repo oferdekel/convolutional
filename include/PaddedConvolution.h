@@ -137,12 +137,12 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     int yCols,
     ElementType* space)
 {
+    int vCols = wCount;
+    int vSize = wChls * wCount;
+
     // use temp space to store the partial unrolled input matrix P in row-major order
     int pCols = wChls;
     ElementType* P = space;
-
-    int vCols = wCount;
-    int vSize = wChls * wCount;
 
     auto ProcessFilterPositionByReshape = [&](int position, int xRow, int xCol, int pRows, int yRow)
     {
@@ -177,7 +177,6 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
         Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
     };
 
-    // unroll input
     // process the TOP LEFT filter position across all channels
     ProcessFilterPositionByCopy(0, (ElementType)0, 0, 0, (yRows - 1) * yCols - 1, yCols + 1);
 
@@ -251,12 +250,8 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
     int uCols = wRows * wCols * wChls;
     ElementType* U = space;
 
-    const ElementType* VColMaj = W;
-    ElementType* ZRowMaj = Y + (xCols * yPadTop + yPadLeft) * wCount;
-
-    int copySize = uRows;
-
     // unroll input
+    int copySize = uRows;
     for(int wRow = 0; wRow < wRows; ++wRow) 
     {
         for(int wCol = 0; wCol < wCols; ++wCol) 
@@ -276,14 +271,17 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
         }   
     }   
 
-    // matrix-matrix multiply
-    Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, ZRowMaj);
+    // unroll the row-major 3-dimensional output tensor Y to a row-major matrix Z
+    ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
 
-    // delete the padding
+    // perform the matrix-matrix multiplication
+    Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, Z);
+
+    // delete the values that were written into the output padding
     int deleteSize = (wCols - 1) * wCount;
     for(int yRow = 0; yRow < yRows - 1; ++yRow)
     {
-        ElementType* begin = ZRowMaj + (yCols + xCols * yRow) * wCount;
+        ElementType* begin = Z + (yCols + xCols * yRow) * wCount;
         std::fill(begin, begin + deleteSize, (ElementType)0);
     }
 }
@@ -329,27 +327,34 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, OddField, Partiall
     int vCols = wCount;
     int vSize = wChls * wCount;
 
-    // allocate P to hold the partially unrolled input
     int pRows = yRows * yCols + (yRows - 1) * (wCols - 1);
     int pCols = wChls;
 
-    const ElementType* VColMaj = W;
+    // unroll the row-major 3-dimensional output tensor Y to a row-major matrix Z
     ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
 
     auto ProcessFilterPosition = [&](int wRow, int wCol, ElementType beta)
     {
+        // partially unroll the row-major input tensor X to a row-major matrix P
         const ElementType* P = X + (wRow * xCols + wCol) * xChls;
+
+        // partially unroll the row-major filter tensor W to a row-major matrix V
         const ElementType* V = W + (wRow * wCols + wCol) * vSize;
+
+        // perform the matrix-matrix multiplication
         Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
     };
 
+    // process the TOP LEFT filter position across all channels
     ProcessFilterPosition(0, 0, 0);
 
+    // process the rest of the TOP filter rows
     for(int wCol = 1; wCol < wCols; ++wCol) 
     {
         ProcessFilterPosition(0, wCol, 1);
     }
 
+    // process the remaining filter rows
     for(int wRow = 1; wRow < wRows; ++wRow) 
     {
         for(int wCol = 0; wCol < wCols; ++wCol) 
@@ -358,7 +363,7 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, OddField, Partiall
         }   
     }   
 
-    // delete the padding
+    // delete the values that were written into the output padding
     int deleteSize = (wCols - 1) * wCount;
     for(int yRow = 0; yRow < yRows - 1; ++yRow)
     {
@@ -417,12 +422,8 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     int uCols = wRows * wCols * wChls;
     ElementType* U = space;
 
-    const ElementType* VColMaj = W;
-    ElementType* ZRowMaj = Y + (xCols * yPadTop + yPadLeft) * wCount;
-
-    int copySize = uRows;
-
     // unroll input
+    int copySize = uRows;
     for(int wRow = 0; wRow < wRows; ++wRow) 
     {
         for(int wCol = 0; wCol < wCols; ++wCol) 
@@ -466,14 +467,17 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
         }   
     }   
 
-    // matrix-matrix multiply
-    Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, ZRowMaj);
+    // unroll the row-major 3-dimensional output tensor Y to a row-major matrix Z
+    ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
 
-    // delete the padding
+    // matrix-matrix multiply
+    Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, Z);
+
+    // delete the values that were written into the output padding
     int deleteSize = (wCols - 1) * wCount;
     for(int yRow = 0; yRow < yRows - 1; ++yRow)
     {
-        ElementType* begin = ZRowMaj + (yCols + xCols * yRow) * wCount;
+        ElementType* begin = Z + (yCols + xCols * yRow) * wCount;
         std::fill(begin, begin + deleteSize, (ElementType)0);
     }
 }
@@ -525,11 +529,10 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     int vCols = wCount;
     int vSize = wChls * wCount;
 
-    // allocate P to hold the partially unrolled input
     int pRows = yRows * yCols + (yRows - 1) * (wCols - 1);
     int pCols = wChls;
 
-    const ElementType* VColMaj = W;
+    // unroll the row-major 3-dimensional output tensor Y to a row-major matrix Z
     ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
 
     auto ProcessFilterPosition = [&](int wRow, int wCol, ElementType beta)
@@ -568,13 +571,16 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
         Gemm(true, true, true, pContentRows, vCols, pCols, 1, PContent, V, beta, ZContent);
     };
 
+    // process the TOP LEFT filter position across all channels
     ProcessFilterPosition(0, 0, 0);
 
+    // process the rest of the TOP filter rows
     for(int wCol = 1; wCol < wCols; ++wCol) 
     {
         ProcessFilterPosition(0, wCol, 1);
     }
 
+    // process the remaining filter rows
     for(int wRow = 1; wRow < wRows; ++wRow) 
     {
         for(int wCol = 0; wCol < wCols; ++wCol) 
@@ -583,7 +589,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
         }   
     }   
 
-    // delete the padding
+    // delete the values that were written into the output padding
     int deleteSize = (wCols - 1) * wCount;
     for(int yRow = 0; yRow < yRows - 1; ++yRow)
     {
