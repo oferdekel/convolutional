@@ -49,6 +49,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
 
     auto blockSize = yCols * yRows * wChls;
 
+    // define a helper function that handles a single spatial filter position (row, col)
     auto ProcessFilterPosition = [&](int position, int xOffset, int xSizeOffset, int uOffset, int skip, int singles, int size, int intervals)
     {
         // copy input from X into U
@@ -102,8 +103,15 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
     // unroll input block corresponding to BOTTOM RIGHT filter elements across all channels
     ProcessFilterPosition(8, yCols + 1, -yCols - 1, 0,  yCols, yRows - 2, yCols + 1, wChls - 1);
 
+    // reshape the filter-major filter tensor W to a column-major matrix V
+    int vCols = wCount;
+    const ElementType* V = W;
+
+    // reshape the output tensor Y into a row-major matrix Z
+    ElementType* Z = Y;
+
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, Y);
+    Gemm(false, false, true, uRows, vCols, uCols, 1, U, V, 0, Z);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,25 +148,40 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     int vCols = wCount;
     int vSize = wChls * wCount;
 
-    // use temp space to store the partial unrolled input matrix P in row-major order
-    int pCols = wChls;
-    ElementType* P = space;
-
-    auto ProcessFilterPositionByReshape = [&](int position, int xRow, int xCol, int pRows, int yRow)
+    auto MultiplyMatrices = [&](const ElementType* P, int pRows, int pCols, int position, ElementType beta, int yRow)
     {
-        // reference (reshape) relevant part of X
-        const ElementType* P = X + (xRow * yCols + xCol) * wChls; 
-
-        // define relevant submatrices of W and Y
+        // reshape the relevant part of the filters tensor W into a row-major matrix V
+        int vCols = wCount;
+        int vSize = wChls * wCount;
         const ElementType* V = W + position * vSize;
+
+        // reshape the relevant part of the output tensor Y into a row-major matrix Z
         ElementType* Z = Y + yRow * vCols;
 
-        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
+        // perform matrix multiplication
+        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
     };
 
-    auto ProcessFilterPositionByCopy = [&](int position, ElementType beta, int xRow, int xCol, int pRows, int yRow)
+    // define a helper function that handles a single spatial filter position without copying input data
+    auto ProcessFilterPositionByReshape = [&](int position, int xRow, int xCol, int xContentRows, int yRow)
     {
-        // copy the relevant part of X into the partial unrolled-input matrix P
+        // reshape the relevant part of X to the partial unrolled-input matrix P
+        int pRows = xContentRows;
+        int pCols = wChls;
+        const ElementType* P = X + (xRow * yCols + xCol) * wChls; 
+
+        MultiplyMatrices(P, pRows, pCols, position, 1, yRow);
+    };
+
+    // define a helper function that handles a single spatial filter position by copying input data
+    auto ProcessFilterPositionByCopy = [&](int position, ElementType beta, int xRow, int xCol, int xContentRows, int yRow)
+    {
+        // use temp space to store the partially unrolled input matrix P in row-major order
+        int pRows = xContentRows;
+        int pCols = wChls;
+        ElementType* P = space;
+
+        // copy the relevant part of X into P
         const ElementType* source = X + (xRow * yCols + xCol) * wChls; 
         int copySize = pRows * pCols;
         std::copy(source, source + copySize, P);
@@ -169,12 +192,7 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
             std::fill_n(P + pRow * pCols, pCols, (ElementType)0);
         }
 
-        // define relevant submatrices of W and Y
-        const ElementType* V = W + position * vSize;
-        ElementType* Z = Y + yRow * vCols;
-
-        // multiply
-        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
+        MultiplyMatrices(P, pRows, pCols, position, beta, yRow);
     };
 
     // process the TOP LEFT filter position across all channels
@@ -250,7 +268,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
     int uCols = wRows * wCols * wChls;
     ElementType* U = space;
 
-    // unroll input
+    // unroll the input
     int copySize = uRows;
     for(int wRow = 0; wRow < wRows; ++wRow) 
     {
@@ -269,13 +287,17 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
                 std::copy(source, source + copySize, target);
             }  
         }   
-    }   
+    }
 
-    // unroll the row-major 3-dimensional output tensor Y to a row-major matrix Z
+    // reshape the filter-major filter tensor W to a column-major matrix V
+    int vCols = wCount;
+    const ElementType* V = W;
+
+    // reshape the relevant part of the output tensor Y to a row-major matrix Z
     ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
 
     // perform the matrix-matrix multiplication
-    Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, Z);
+    Gemm(false, false, true, uRows, vCols, uCols, 1, U, V, 0, Z);
 
     // delete the values that were written into the output padding
     int deleteSize = (wCols - 1) * wCount;
@@ -317,29 +339,27 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, OddField, Partiall
     int yRows, 
     int yCols)
 {
-    int xRows = yRows + wRows - 1;
     int xCols = yCols + wCols - 1;
     int xChls = wChls;
 
     int yPadTop = (wRows - 1) / 2;
     int yPadLeft = (wCols - 1) / 2;
 
-    int vCols = wCount;
-    int vSize = wChls * wCount;
-
-    int pRows = yRows * yCols + (yRows - 1) * (wCols - 1);
-    int pCols = wChls;
-
-    // unroll the row-major 3-dimensional output tensor Y to a row-major matrix Z
+    // reshape the relevant part of the output tensor Y into a row-major matrix Z
     ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
 
+    // define a helper function that handles a single spatial filter position (row, col)
     auto ProcessFilterPosition = [&](int wRow, int wCol, ElementType beta)
     {
-        // partially unroll the row-major input tensor X to a row-major matrix P
+        // reshape the relevant part of the input tensor X into a row-major matrix P
+        int pRows = yRows * yCols + (yRows - 1) * (wCols - 1);
+        int pCols = wChls;
         const ElementType* P = X + (wRow * xCols + wCol) * xChls;
 
-        // partially unroll the row-major filter tensor W to a row-major matrix V
-        const ElementType* V = W + (wRow * wCols + wCol) * vSize;
+        // reshape the relevant part of the filter tensor W into a row-major matrix V
+       int vCols = wCount;
+       int vSize = wChls * wCount;
+       const ElementType* V = W + (wRow * wCols + wCol) * vSize;
 
         // perform the matrix-matrix multiplication
         Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
@@ -467,11 +487,15 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
         }   
     }   
 
-    // unroll the row-major 3-dimensional output tensor Y to a row-major matrix Z
+    // reshape the filter-major filter tensor W to a column-major matrix V
+    int vCols = wCount;
+    const ElementType* V = W;
+
+    // reshape the relevant part of the output tensor Y to a row-major matrix Z
     ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
 
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, wCount, uCols, 1, U, W, 0, Z);
+    Gemm(false, false, true, uRows, vCols, uCols, 1, U, V, 0, Z);
 
     // delete the values that were written into the output padding
     int deleteSize = (wCols - 1) * wCount;
@@ -526,21 +550,13 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     int xPadBottom = xPadTop;
     int xPadRight = xPadLeft;
 
-    int vCols = wCount;
-    int vSize = wChls * wCount;
-
-    int pRows = yRows * yCols + (yRows - 1) * (wCols - 1);
-    int pCols = wChls;
-
-    // unroll the row-major 3-dimensional output tensor Y to a row-major matrix Z
-    ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
-
+    // define a helper function that handles a single spatial filter position (row, col)
     auto ProcessFilterPosition = [&](int wRow, int wCol, ElementType beta)
     {
         int xRow = wRow;
         int xCol = wCol;
 
-        // get distances
+        // get distance from (xRow, xCol) to the beginning of the non-zero content
         int distToContent = 0;
         if(xRow < xPadTop)
         {
@@ -551,6 +567,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
             distToContent = xPadLeft - xCol;
         }
         
+        // get distance from the beginning of the non-zero content to (xRow, xCol)
         int distFromContent = 0;
         if(wRows - xRow <= xPadBottom)
         {
@@ -561,14 +578,21 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
             distFromContent = xCol + xPadRight - wCols + 1;
         }
 
-        // define submatrices with nonzero content
-        int pContentRows = pRows - distToContent - distFromContent;
-        const ElementType* PContent = X + (wRow * xCols + wCol + distToContent) * xChls;
+        // reshape the relevant part of the input tensor X into the row-major matrix P
+        int pRows = yRows * yCols + (yRows - 1) * (wCols - 1) - (distToContent + distFromContent);
+        int pCols = wChls;
+        const ElementType* P = X + (wRow * xCols + wCol + distToContent) * xChls;
+
+        // reshape the relevant part of the filter tensor W into the row-major matrix V
+        int vCols = wCount;
+        int vSize = wChls * wCount;
         const ElementType* V = W + (wRow * wCols + wCol) * vSize;
-        ElementType* ZContent = Z + distToContent * vCols;
+
+        // reshape the relevant part of the output tensor Y into a row-major matrix Z
+        ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount + distToContent * vCols;
         
         // perform matrix multiplication
-        Gemm(true, true, true, pContentRows, vCols, pCols, 1, PContent, V, beta, ZContent);
+        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
     };
 
     // process the TOP LEFT filter position across all channels
@@ -593,7 +617,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     int deleteSize = (wCols - 1) * wCount;
     for(int yRow = 0; yRow < yRows - 1; ++yRow)
     {
-        ElementType* begin = Z + (yCols + xCols * yRow) * wCount;
+        ElementType* begin = Y + (xCols * (yRow + yPadTop) + (yCols + yPadLeft)) * wCount;
         std::fill(begin, begin + deleteSize, (ElementType)0);
     }
 }
