@@ -8,6 +8,7 @@ set(include
     include/ConvolutionProperties.h
     include/CSVParser.h
     include/ForLoopConvolution.h
+    include/PaddedConvolution.h
     include/Tensor.h
     include/TestHelpers.h
     include/UnrolledConvolution.h

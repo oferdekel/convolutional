@@ -22,12 +22,12 @@ int main(int argc, char** argv)
     // filter shape
     int wRows = 3;
     int wCols = 3;
-    int wChls = 2;
+    int wChls = 4;
     int wCount = 3;
 
     // output shape
-    int yRows = 4;
-    int yCols = 3;
+    int yRows = 6;
+    int yCols = 5;
     int yChls = wCount;
 
     // convolution strides

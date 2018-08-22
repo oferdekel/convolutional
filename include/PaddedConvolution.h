@@ -440,17 +440,15 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
             {
                 distToContent = xPadLeft - xCol;
             }
-            
+
             int distFromContent = 0;
-            int firstBottomPadRow = xRows - xPadBottom;
-            int firstRightPadCol = xCols - xPadRight;
-            if(xRow >= firstBottomPadRow)
+            if (wRows - xRow <= xPadBottom)
             {
-                distFromContent = (xRow - firstBottomPadRow) * xCols + xPadRight + xCol + 1;
+                distFromContent = (xRow + xPadBottom - wRows + 1) * xCols + xCol + xPadRight - wCols + 1;
             }
-            else if(xCol >= firstRightPadCol)
+            else if (wCols - xCol <= xPadRight)
             {
-                distFromContent = xCol - firstRightPadCol + 1;
+                distFromContent = xCol + xPadRight - wCols + 1;
             }
 
             for(int wChl = 0; wChl < wChls; ++wChl) 
@@ -464,7 +462,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
 
                 // copy from X to U
                 std::copy(source + distToContent, source + copySize - distFromContent, target + distToContent);
-            }  
+            }
         }   
     }   
 
@@ -551,15 +549,13 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
         }
         
         int distFromContent = 0;
-        int firstBottomPadRow = xRows - xPadBottom;
-        int firstRightPadCol = xCols - xPadRight;
-        if(xRow >= firstBottomPadRow)
+        if(wRows - xRow <= xPadBottom)
         {
-            distFromContent = (xRow - firstBottomPadRow) * xCols + xPadRight + xCol + 1;
+            distFromContent = (xRow + xPadBottom - wRows + 1) * xCols + xCol + xPadRight - wCols + 1;
         }
-        else if(xCol >= firstRightPadCol)
+        else if(wCols - xCol <= xPadRight)
         {
-            distFromContent = xCol - firstRightPadCol + 1;
+            distFromContent = xCol + xPadRight - wCols + 1;
         }
 
         // define submatrices with nonzero content
