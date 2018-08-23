@@ -510,7 +510,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
 // 2D Tensor Convolution
 // * supports only odd number of filter rows and columns
 // * supports only horizontal and vertical stride of 1
-// * unrolled input 
+// * partially unrolled input 
 // * filters in row-major order
 // * input tensor in row-major order with any number of explicit padding rows on the top/bottom and explicit padding columns on the left/right
 // * output tensor in row-major order with (wRows - 1)/2 explicit padding rows on the top/bottom and (wCols - 1)/2 explicit padding columns on the left/right
@@ -528,7 +528,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
 // xPadTop - the number of implicit zero-padding rows at the top of the input
 // xPadLeft - the number of implicit zero-padding columns at the left of the input
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, RowMajorFilters, RowMajorOutput, UnitStride, UnrolledInput>, 
+void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitStride>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 

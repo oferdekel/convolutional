@@ -12,7 +12,13 @@
 
 #include <vector>
 
-// Unrolled-input convolution with row-major input tensor and row-major output tensor 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 2D Tensor Convolution
+// * unrolled input 
+// * filters in filter-major order
+// * input tensor in row-major order
+// * output tensor in row-major order
+// * requires temporary space of size (wRows * wCols * wChls * yRows * yCols)
 //
 // W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in row-major order
@@ -26,7 +32,6 @@
 // yRows - number of rows in the output tensor Y
 // yCols - number of columns in the output tensor Y
 // space - pointer to temporary space of size at least (wRows * wCols * wChls * yRows * yCols)
-//
 template <typename ElementType>
 void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>,
     const ElementType* W, 
@@ -51,14 +56,8 @@ void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMaj
     int uCols = wRows * wCols * wChls;
     ElementType* U = space;
 
-    int vCols = wCount;
-    const ElementType* VColMaj = W;
-    
-    ElementType* ZRowMaj = Y;
-
+    // unroll the input
     int copySize = wCols * wChls;
-
-    // unroll input
     for(int yRow = 0; yRow < yRows; ++yRow) 
     {
         for(int yCol = 0; yCol < yCols; ++yCol) 
@@ -80,11 +79,24 @@ void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMaj
         }   
     }   
 
+    // reshape the filters tensor W into a column-major matrix V
+    int vCols = wCount;
+    const ElementType* V = W;
+    
+    // reshape the output tensor Y into a row-major matrix Z
+    ElementType* Z = Y;
+
     // matrix-matrix multiply
-    Gemm(true, false, true, uRows, vCols, uCols, 1, U, VColMaj, 0, ZRowMaj);
+    Gemm(true, false, true, uRows, vCols, uCols, 1, U, V, 0, Z);
 }
 
-// Unrolled-input convolution with channel-major input tensor and row-major output tensor 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 2D Tensor Convolution
+// * unrolled input 
+// * filters in filter-major order
+// * input tensor in channel-major order
+// * output tensor in row-major order
+// * requires temporary space of size (wRows * wCols * wChls * yRows * yCols)
 //
 // W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in channel-major order
@@ -98,7 +110,6 @@ void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMaj
 // yRows - number of rows in the output tensor Y
 // yCols - number of columns in the output tensor Y
 // space - pointer to temporary space of size at least (wRows * wCols * wChls * yRows * yCols)
-//
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnrolledInput>,
     const ElementType* W, 
@@ -127,14 +138,8 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Ro
     int uCols = wRows * wCols * wChls;
     ElementType* U = space;
 
-    int vCols = wCount;
-
-    const ElementType* VColMaj = W;
-    ElementType* ZRowMaj = Y;
-
+    // unroll the input
     int copySize = yCols;
-
-    // unroll input
     for(int wRow = 0; wRow < wRows; ++wRow) {
         for(int wCol = 0; wCol < wCols; ++wCol) {
             for(int wChl = 0; wChl < wChls; ++wChl) {
@@ -157,11 +162,24 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Ro
         }   
     }   
 
+    // reshape the filters tensor W into a column-major matrix V
+    int vCols = wCount;
+    const ElementType* V = W;
+    
+    // reshape the output tensor Y into a row-major matrix Z
+    ElementType* Z = Y;
+
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, vCols, uCols, 1, U, VColMaj, 0, ZRowMaj);
+    Gemm(false, false, true, uRows, vCols, uCols, 1, U, V, 0, Z);
 }
 
-// Unrolled-output convolution with row-major input tensor and row-major output tensor 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// 2D Tensor Convolution
+// * unrolled output 
+// * filters in filter-major order
+// * input tensor in row-major order
+// * output tensor in row-major order
+// * requires temporary space of size TODO
 //
 // W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in row-major order
@@ -174,6 +192,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Ro
 // hStride - horizontal stride
 // yRows - number of rows in the output tensor Y
 // yCols - number of columns in the output tensor Y
+// space - TODO
 //
 template <typename ElementType>
 void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledOutput>,
