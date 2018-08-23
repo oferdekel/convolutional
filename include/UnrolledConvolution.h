@@ -92,6 +92,7 @@ void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMaj
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 2D Tensor Convolution
+// * supports only horizontal stride of 1
 // * unrolled input 
 // * filters in filter-major order
 // * input tensor in channel-major order
@@ -106,12 +107,11 @@ void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMaj
 // wCols - number of columns in each filter in W
 // wChls - number of channels in each filter in W
 // vStride - vertical stride
-// hStride - horizontal stride
 // yRows - number of rows in the output tensor Y
 // yCols - number of columns in the output tensor Y
 // space - pointer to temporary space of size at least (wRows * wCols * wChls * yRows * yCols)
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnrolledInput>,
+void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>,
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -120,16 +120,10 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Ro
     int wCols, 
     int wChls, 
     int vStride, 
-    int hStride, 
     int yRows, 
     int yCols,
     ElementType* space)
 {
-    if (hStride != 1)
-    {
-        throw std::invalid_argument("Unrolled Convolution requires hStride = 1");
-    }
-
     int xRows = (yRows - 1) * vStride + wRows;
     int xCols = yCols + wCols - 1;
 
@@ -175,11 +169,12 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Ro
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 2D Tensor Convolution
+// * supports only horizontal stride of 1
 // * unrolled output 
 // * filters in filter-major order
 // * input tensor in row-major order
-// * output tensor in row-major order
-// * requires temporary space of size TODO
+// * output tensor in channel-major order
+// * requires temporary space of size (xRows * xCols * wCount * wRows * wCols)
 //
 // W - 4-dimensional weights tensor in filter-major order
 // X - 3-dimensional input tensor in row-major order
@@ -189,63 +184,70 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Ro
 // wCols - number of columns in each filter in W
 // wChls - number of channels in each filter in W
 // vStride - vertical stride
-// hStride - horizontal stride
 // yRows - number of rows in the output tensor Y
 // yCols - number of columns in the output tensor Y
-// space - TODO
-//
+// space - pointer to temporary space of size at least (xRows * xCols * wCount * wRows * wCols)
 template <typename ElementType>
-void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledOutput>,
-    const ElementType* W, const ElementType* X, ElementType* Y, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols)
+void Convolution(ConvolutionProperties<ChannelMajorOutput, FilterMajorFilters, RowMajorInput, UnrolledOutput>,
+    const ElementType* W, const ElementType* X, ElementType* Y, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols, ElementType* space)
 {
-    //throw std::invalid_argument("Not yet implemented");
-
-    // TODO - use externally allocated memory
-
+    int yChls = wCount;
     int xRows = (yRows - 1) * vStride + wRows;
     int xCols = yCols + wCols - 1;
 
+    // reshape the row-major input tensor X to a row-major matrix U
     int uRows = xRows * xCols;
     int uCols = wChls;
+    const ElementType* U = X;
+
+    // reshape the filter-major filter tensor W to a column-major matrix V
     int vCols = wCount * wRows * wCols;
+    const ElementType* V = W;
 
-    // matrix-matrix multiply
-    std::vector<ElementType> UColMaj(uRows * vCols);
-    Gemm(true, false, false, uRows, vCols, uCols, 1, X, W, 1, UColMaj.data());
+    // use temp space to store the unrolled output matrix O in column-major order
+    int oRows = uRows;    
+    ElementType* O = space;
+    Gemm(true, false, false, uRows, vCols, uCols, 1, U, V, 0, O);
 
-    int uBlockRow = 1;
-    int uBlockCol = 2;
+    auto MultiVectorAdd = [&](ElementType* begin, int size, int count, int increment)
+    {
+        for(int i=0; i < count-1; ++i)
+        {
+            Axpy(size, begin + i * increment, begin + (i + 1) * increment);
+            std::fill_n(begin + i * increment, size, (ElementType)0);
+        }
+    };
 
+    int size = yCols;
+    int count = wCols;
+    int increment = uRows + hStride;
 
     // collect values from the unrolled output
-    for(int yRow = 0; yRow < yRows; ++yRow) {
+    for(int filter = 0; filter < wCount; ++filter) {
+        for(int yRow = 0; yRow < yRows; ++yRow) {
 
+            int xRow = yRow * vStride;
+        
+            ElementType* first = O + filter * wRows * wCols * oRows + yRow * xCols;
+            const ElementType* last = first + (count-1) * increment;
 
-    for(int wRow = 0; wRow < wRows; ++wRow) {
-        for(int wCol = 0; wCol < wCols; ++wCol) {
-            for(int wChl = 0; wChl < wChls; ++wChl) {
+            MultiVectorAdd(first, size, count, increment);
 
-                    // calculate copy source
-                    int xRow = yRow * vStride + wRow;
-                    int xCol = wCol;
-                    int xChl = wChl;
-                    const float* source = X + (xChl * xRows + xRow) * xCols + xCol;
-                    
-                    // calculate copy target
-                    int uCol =  (wRow * wCols + wCol) * wChls + wChl;
-                    ElementType* target = UColMaj.data() + (uCol * yRows + yRow) * yCols;
+            for(int wRow = 1; wRow < wRows; ++wRow) {
 
-                    // copy from X to U
-                  //  std::copy(source, source + copySize, target);
-                }   
-            }  
+                int oFromRow = (xRow + wRow) * xCols;
+                int oFromCol = (filter * wRows + wRow) * wCols;
+                
+                ElementType* next = O + oFromCol * oRows + oFromRow;
+                Axpy(size, last, next);
+
+                first = next;
+                last = first + (count-1) * increment;
+                MultiVectorAdd(first, size, count, increment);
+            }
+
+            ElementType* target = Y + (filter * yRows + yRow) * yCols;
+            std::copy(last, last+size, target); 
         }   
     }   
-
-
-
-
-    //MatrixConstInterface<float> T(ZColMaj.data(), {uRows, vCols}, ColMaj2Order);
-    //std::cout << T << std::endl;
-
 }

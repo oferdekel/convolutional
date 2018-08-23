@@ -35,8 +35,8 @@ void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, int m, int n, i
     auto BMat = MatrixConstInterface<float>(B, { k, n }, orderB);
     auto CMat = MatrixInterface<float>(C, { m, n }, orderC);
 
-//     std::cout << AMat << std::endl << std::endl;
-//     std::cout << BMat << std::endl << std::endl;
+    //  std::cout << AMat << std::endl << std::endl;
+    //  std::cout << BMat << std::endl << std::endl;
     
     for (int i = 0; i < CMat.Size(0); ++i)
     {
@@ -53,6 +53,14 @@ void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, int m, int n, i
 //    std::cout << CMat << std::endl << std::endl;
 }
 
+void BLASAxpy(int n, float alpha, const float* X, int incX, float* Y, int incY)
+{
+    for(int i=0; i < n; ++i)
+    {
+        Y[i * incY] += alpha * X[i * incX];
+    }
+}
+
 #endif
 
 void Gemm(bool isARowMajor, bool isBRowMajor, bool isCRowMajor, int m, int n, int k, float alpha, const float* A, int lda, const float* B, int ldb, float beta, float* C, int ldc)
@@ -66,5 +74,25 @@ void Gemm(bool isARowMajor, bool isBRowMajor, bool isCRowMajor, int m, int n, in
     int ldb = isBRowMajor ? n : k;
     int ldc = isCRowMajor ? n : m;
     Gemm(isARowMajor, isBRowMajor, isCRowMajor, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+}
+
+void Axpy(int n, const float* X, float* Y)
+{
+    for(int i=0; i < n; ++i)
+    {
+        Y[i] += X[i];
+    }
+}
+
+void Axpy(int n, float alpha, const float* X, int incX, float* Y, int incY)
+{
+    if(alpha == 1 && incX == 1 && incY == 1)
+    {
+        Axpy(n, X, Y);
+    }
+    else
+    {
+        BLASAxpy(n, alpha, X, incX, Y, incY);
+    }
 }
 

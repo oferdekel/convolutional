@@ -22,7 +22,8 @@ struct RowMajorFilters{};
 struct RowMajorInput{};
 struct RowMajorOutput{};
 struct ThreeByThreeField{};     // number of filter rows and columns equals three
-struct UnitStride{};            // horizontal stride and vertical stride equal 1
+struct UnitHorizontalStride{};
+struct UnitVerticalStride{};
 struct UnrolledInput{};
 struct UnrolledOutput{};
 

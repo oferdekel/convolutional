@@ -32,7 +32,7 @@
 // yCols - number of columns in the output tensor Y
 // space - pointer to temporary space of size at least (9 * wChls * yRows * yCols)
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnitStride, UnrolledInput>,
+void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>,
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -135,7 +135,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
 // yPadLeft - the number of implicit zero-padding columns at the left of the input
 // space - pointer to temporary space of size at least (yRows * yCols * wChls)
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitStride>, 
+void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -244,7 +244,7 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
 // yCols - number of columns in the output tensor Y
 // space - pointer to temporary space of size at least ((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls)
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput,  UnitStride, UnrolledInput>, 
+void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput,  UnitHorizontalStride, UnitVerticalStride, UnrolledInput>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -328,7 +328,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
 // yRows - number of rows in the output tensor Y
 // yCols - number of columns in the output tensor Y
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitStride>, 
+void Convolution(ConvolutionProperties<ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -415,7 +415,7 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, OddField, Partiall
 // xPadLeft - number of input padding columns on the left and right
 // space - pointer to temporary space of size at least ((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls)
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitStride, UnrolledInput>, 
+void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -528,7 +528,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
 // xPadTop - the number of implicit zero-padding rows at the top of the input
 // xPadLeft - the number of implicit zero-padding columns at the left of the input
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitStride>, 
+void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 

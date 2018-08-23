@@ -14,3 +14,8 @@
 void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, int m, int n, int k, float alpha, const float* A, int lda, const float* B, int ldb, float beta, float* C, int ldc);
 void Gemm(bool isARowMajor, bool isBRowMajor, bool isCRowMajor, int m, int n, int k, float alpha, const float* A, int lda, const float* B, int ldb, float beta, float* C, int ldc);
 void Gemm(bool isARowMajor, bool isBRowMajor, bool isCRowMajor, int m, int n, int k, float alpha, const float* A, const float* B, float beta, float* C);
+
+// AXPY overloads
+void BLASAxpy(int n, float alpha, const float* X, int incX, float* Y, int incY);
+void Axpy(int n, const float* X, float* Y);
+void Axpy(int n, float alpha, const float* X, int incX, float* Y, int incY);
