@@ -14,7 +14,7 @@ void RunTest(TestType test)
 {
     try
     {
-        Tensor<float,3> Y = test();
+        auto Y = test();
         std::cout << Y << std::endl << std::endl;
     }
     catch(std::invalid_argument e)

@@ -112,6 +112,7 @@ public:
     void Generate(GeneratorType generator, IntTuple<degree> beginPadding = {}, IntTuple<degree> endPadding = {});
 
     // Returns a pointer to the underlying contiguous data
+    using TensorConstInterface<ElementType, degree>::Data;
     ElementType* Data() { return this->_pData; }
 };
 
@@ -132,6 +133,9 @@ private:
 
 template <typename ElementType, int degree, typename RandomEngineType>
 Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> beginPadding = {}, IntTuple<degree> endPadding = {});
+
+template <typename ElementType, int degree, typename RandomEngineType>
+std::vector<Tensor<ElementType, degree>> GetRandomTensors(int count, RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> beginPadding = {}, IntTuple<degree> endPadding = {});
 
 //
 // Matrix (degree 2 Tensors) abbreviations
@@ -459,3 +463,15 @@ Tensor<ElementType, degree> GetRandomTensor(RandomEngineType& engine, IntTuple<d
 
     return T;
 }
+
+template <typename ElementType, int degree, typename RandomEngineType>
+std::vector<Tensor<ElementType, degree>> GetRandomTensors(int count, RandomEngineType& engine, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> beginPadding, IntTuple<degree> endPadding)
+{
+    std::vector<Tensor<ElementType, degree>> tensors;
+    for(int i = 0; i < count; ++i)
+    {
+        tensors.push_back(GetRandomTensor<ElementType, degree>(engine, shape, order, beginPadding, endPadding));
+    }
+    return tensors;
+}
+
