@@ -320,10 +320,16 @@ void RunDebugTests()
 
 void PrintBenchmarkNames()
 {
-    std::cout << "forLoop, ";
-    std::cout << "rowMajUnrolledInput, ";
-    std::cout << "chlMajUnrolledInput, ";
-    std::cout << "UnrolledOutput";
+    std::cout << "ForLoopConvolution, ";
+    std::cout << "UnrolledInputConvolution, ";
+    std::cout << "UnrolledInputChlMajInputConvolution, ";
+    std::cout << "UnrolledOutputConvolution, ";
+    std::cout << "UnrolledInputImplicitInPaddingConvolution, ";
+    std::cout << "UnrolledInputExplicitOutPaddingConvolution, ";
+    std::cout << "UnrolledInputExplicitPaddingConvolution, ";
+    std::cout << "PartiallyUnrolledInputImplicitInPaddingConvolution, ";
+    std::cout << "PartiallyUnrolledInputExplicitOutPaddingConvolution, ";
+    std::cout << "PartiallyUnrolledInputExplicitPaddingConvolution";
 }
 
 void RunAllBenchmarks(double testDuration, int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int xCount, int vStride, int hStride)
