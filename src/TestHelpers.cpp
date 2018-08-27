@@ -12,13 +12,6 @@
 
 void RunTest(TestType test)
 {
-    try
-    {
-        auto Y = test();
-        std::cout << Y << std::endl << std::endl;
-    }
-    catch(std::invalid_argument e)
-    {
-        std::cerr << e.what() << std::endl << std::endl;
-    }
+    auto Y = test();
+    std::cout << Y << std::endl << std::endl;
 }

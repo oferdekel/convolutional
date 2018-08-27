@@ -46,6 +46,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
     int uRows = yRows * yCols;
     int uCols = 9 * wChls;
     ElementType* U = space;
+    std::fill_n(U, uRows * uCols, (ElementType)0);
 
     auto blockSize = yCols * yRows * wChls;
 
@@ -145,10 +146,12 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
     int yCols,
     ElementType* space)
 {
+    int yChls = wCount;
+
     int vCols = wCount;
     int vSize = wChls * wCount;
 
-    auto MultiplyMatrices = [&](const ElementType* P, int pRows, int pCols, int position, ElementType beta, int yRow)
+    auto MultiplyMatrices = [&](const ElementType* P, int pRows, int pCols, int position, int yRow)
     {
         // reshape the relevant part of the filters tensor W into a row-major matrix V
         int vCols = wCount;
@@ -159,7 +162,7 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
         ElementType* Z = Y + yRow * vCols;
 
         // perform matrix multiplication
-        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
+        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
     };
 
     // define a helper function that handles a single spatial filter position without copying input data
@@ -170,11 +173,11 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
         int pCols = wChls;
         const ElementType* P = X + (xRow * yCols + xCol) * wChls; 
 
-        MultiplyMatrices(P, pRows, pCols, position, 1, yRow);
+        MultiplyMatrices(P, pRows, pCols, position, yRow);
     };
 
     // define a helper function that handles a single spatial filter position by copying input data
-    auto ProcessFilterPositionByCopy = [&](int position, ElementType beta, int xRow, int xCol, int xContentRows, int yRow)
+    auto ProcessFilterPositionByCopy = [&](int position, int xRow, int xCol, int xContentRows, int yRow)
     {
         // use temp space to store the partially unrolled input matrix P in row-major order
         int pRows = xContentRows;
@@ -192,35 +195,38 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
             std::fill_n(P + pRow * pCols, pCols, (ElementType)0);
         }
 
-        MultiplyMatrices(P, pRows, pCols, position, beta, yRow);
+        MultiplyMatrices(P, pRows, pCols, position, yRow);
     };
 
+    // reset the output 
+    std::fill_n(Y, yRows * yCols * yChls, (ElementType)0);
+
     // process the TOP LEFT filter position across all channels
-    ProcessFilterPositionByCopy(0, (ElementType)0, 0, 0, (yRows - 1) * yCols - 1, yCols + 1);
+    ProcessFilterPositionByCopy(0, 0, 0, (yRows - 1) * yCols - 1, yCols + 1);
 
     // process the TOP CENTER filter position across all channels
     ProcessFilterPositionByReshape(1, 0, 0, (yRows - 1) * yCols, yCols);
 
     // process the TOP RIGHT filter position across all channels
-    ProcessFilterPositionByCopy(2, (ElementType)1, 0, 1, (yRows - 1) * yCols - 1, yCols);
+    ProcessFilterPositionByCopy(2, 0, 1, (yRows - 1) * yCols - 1, yCols);
 
     // process the MID LEFT filter position across all channels
-    ProcessFilterPositionByCopy(3, (ElementType)1, 0, 0, yRows * yCols - 1, 1);
+    ProcessFilterPositionByCopy(3, 0, 0, yRows * yCols - 1, 1);
 
     // process the MID CENTER filter position across all channels
     ProcessFilterPositionByReshape(4, 0, 0, yRows * yCols, 0);
 
     // process the MID RIGHT filter position across all channels
-    ProcessFilterPositionByCopy(5, (ElementType)1, 0, 1, yRows * yCols - 1, 0);
+    ProcessFilterPositionByCopy(5, 0, 1, yRows * yCols - 1, 0);
 
     // process the BOTTOM LEFT filter position across all channels
-    ProcessFilterPositionByCopy(6, (ElementType)1, 1, 0, (yRows - 1) * yCols - 1, 1);
+    ProcessFilterPositionByCopy(6, 1, 0, (yRows - 1) * yCols - 1, 1);
 
     // process the BOTTOM CENTER filter position across all channels
     ProcessFilterPositionByReshape(7, 1, 0, (yRows - 1) * yCols, 0);
 
     // process the BOTTOM RIGHT filter position across all channels
-    ProcessFilterPositionByCopy(8, (ElementType)1, 1, 1, (yRows - 1) * yCols - 1, 0);
+    ProcessFilterPositionByCopy(8, 1, 1, (yRows - 1) * yCols - 1, 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -441,6 +447,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     int uRows = yRows * yCols + (yRows - 1) * (wCols - 1);
     int uCols = wRows * wCols * wChls;
     ElementType* U = space;
+    std::fill_n(U, uRows * uCols, (ElementType)0);
 
     // unroll input
     int copySize = uRows;
@@ -541,6 +548,8 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     int xPadTop, 
     int xPadLeft)
 {
+    int yChls = wCount;
+
     int xRows = yRows + wRows - 1;
     int xCols = yCols + wCols - 1;
     int xChls = wChls;
@@ -551,7 +560,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     int xPadRight = xPadLeft;
 
     // define a helper function that handles a single spatial filter position (row, col)
-    auto ProcessFilterPosition = [&](int wRow, int wCol, ElementType beta)
+    auto ProcessFilterPosition = [&](int wRow, int wCol)
     {
         int xRow = wRow;
         int xCol = wCol;
@@ -592,16 +601,19 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
         ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount + distToContent * vCols;
         
         // perform matrix multiplication
-        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
+        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
     };
 
+    // reset the output 
+    std::fill_n(Y, (yRows + wRows - 1) * (yCols + wCols - 1) * yChls, (ElementType)0);
+
     // process the TOP LEFT filter position across all channels
-    ProcessFilterPosition(0, 0, 0);
+    ProcessFilterPosition(0, 0);
 
     // process the rest of the TOP filter rows
     for(int wCol = 1; wCol < wCols; ++wCol) 
     {
-        ProcessFilterPosition(0, wCol, 1);
+        ProcessFilterPosition(0, wCol);
     }
 
     // process the remaining filter rows
@@ -609,7 +621,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     {
         for(int wCol = 0; wCol < wCols; ++wCol) 
         {
-            ProcessFilterPosition(wRow, wCol, 1);
+            ProcessFilterPosition(wRow, wCol);
         }   
     }   
 
@@ -618,6 +630,6 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
     for(int yRow = 0; yRow < yRows - 1; ++yRow)
     {
         ElementType* begin = Y + (xCols * (yRow + yPadTop) + (yCols + yPadLeft)) * wCount;
-        std::fill(begin, begin + deleteSize, (ElementType)0);
+        std::fill_n(begin, deleteSize, (ElementType)0);
     }
 }
