@@ -25,7 +25,7 @@
 #include "UnrolledOutputConvolution.h"
 
 
-void RunAllTests(const float* WFilMaj, const float* WRowMaj, const float* XRowMajExp, const float* XChlMajExp, const float* XRowMajImp, const float* XChlMajImp, int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int vStride, int hStride, int xPadTop, int xPadBottom, int xPadLeft, int xPadRight)
+void Test(const float* WFilMaj, const float* WRowMaj, const float* XRowMajExp, const float* XChlMajExp, const float* XRowMajImp, const float* XChlMajImp, int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int vStride, int hStride, int xPadTop, int xPadBottom, int xPadLeft, int xPadRight)
 {
     // output shape
     int yChls = wCount;
@@ -52,7 +52,7 @@ void RunAllTests(const float* WFilMaj, const float* WRowMaj, const float* XRowMa
     std::cout << "UnrolledInputConvolution" << std::endl;
     {
         auto properties = ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
-        std::vector<float> space(wRows * wCols * wChls * yRows * yCols);
+        auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
         Convolution(properties, WFilMaj, XRowMajExp, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
         std::cout << YRowMaj << std::endl << std::endl;
     }
@@ -60,7 +60,7 @@ void RunAllTests(const float* WFilMaj, const float* WRowMaj, const float* XRowMa
     std::cout << "UnrolledInputChlMajInputConvolution" << std::endl;
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
-        std::vector<float> space(wRows * wCols * wChls * yRows * yCols);
+        auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
         Convolution(properties, WFilMaj, XChlMajExp, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
         std::cout << YRowMaj << std::endl << std::endl;
     }
@@ -68,7 +68,7 @@ void RunAllTests(const float* WFilMaj, const float* WRowMaj, const float* XRowMa
     std::cout << "UnrolledOutputConvolution" << std::endl;
     {
         auto properties = ConvolutionProperties<ChannelMajorOutput, FilterMajorFilters, RowMajorInput, UnrolledOutput>{};
-        std::vector<float> space(xRows * xCols * wCount * wRows * wCols);
+        auto space = std::vector<float>(xRows * xCols * wCount * wRows * wCols);
         Convolution(properties, WFilMaj, XRowMajExp, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
         std::cout << YChlMaj << std::endl << std::endl;
     }
@@ -76,7 +76,7 @@ void RunAllTests(const float* WFilMaj, const float* WRowMaj, const float* XRowMa
     std::cout << "UnrolledInputImplicitInPaddingConvolution" << std::endl;
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
-        std::vector<float> space(9 * wChls * yRows * yCols);
+        auto space = std::vector<float>(9 * wChls * yRows * yCols);
         Convolution(properties, WFilMaj, XChlMajImp, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
         std::cout << YRowMaj << std::endl << std::endl;
     }
@@ -84,7 +84,7 @@ void RunAllTests(const float* WFilMaj, const float* WRowMaj, const float* XRowMa
     std::cout << "UnrolledInputExplicitOutPaddingConvolution" << std::endl;
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
-        std::vector<float> space((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
+        auto space = std::vector<float>((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
         Convolution(properties, WFilMaj, XChlMajExp, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, space.data());
         std::cout << YRowMajExp << std::endl << std::endl;
     }
@@ -92,7 +92,7 @@ void RunAllTests(const float* WFilMaj, const float* WRowMaj, const float* XRowMa
     std::cout << "UnrolledInputExplicitPaddingConvolution" << std::endl;
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
-        std::vector<float> space((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
+        auto space = std::vector<float>((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
         Convolution(properties, WFilMaj, XChlMajExp, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft, space.data());
         std::cout << YRowMajExp << std::endl << std::endl;
     }
@@ -101,7 +101,7 @@ void RunAllTests(const float* WFilMaj, const float* WRowMaj, const float* XRowMa
     std::cout << "PartiallyUnrolledInputImplicitInPaddingConvolution" << std::endl;
     {
         auto properties = ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride>{};
-        std::vector<float> space(yRows * yCols * wChls);
+        auto space = std::vector<float>(yRows * yCols * wChls);
         Convolution(properties, WRowMaj, XRowMajImp, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
         std::cout << YRowMaj << std::endl << std::endl;
     }
@@ -121,7 +121,7 @@ void RunAllTests(const float* WFilMaj, const float* WRowMaj, const float* XRowMa
     }
 }
 
-void RunAllTests(int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int xCount, int vStride, int hStride)
+void Test(int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int vStride, int hStride)
 {
     // input shape
     int xRows = (yRows - 1) * vStride + wRows; // includes any input padding
@@ -155,10 +155,10 @@ void RunAllTests(int wCount, int wRows, int wCols, int wChls, int yRows, int yCo
     engine.seed(seed2);
     auto XChlMajImp = GetRandomTensor<float, 3>(engine, { yRows, yCols, xChls }, ChlMaj3Order);
 
-    RunAllTests(WFilMaj.Data(), WRowMaj.Data(), XRowMajExp.Data(), XChlMajExp.Data(), XRowMajImp.Data(), XChlMajImp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, vStride, hStride, xPadTop, xPadBottom, xPadLeft, xPadRight);    
+    Test(WFilMaj.Data(), WRowMaj.Data(), XRowMajExp.Data(), XChlMajExp.Data(), XRowMajImp.Data(), XChlMajImp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, vStride, hStride, xPadTop, xPadBottom, xPadLeft, xPadRight);    
 }
 
-void RunAllTests()
+void Test()
 {
     // filter shape
     int wRows = 3;
@@ -257,10 +257,10 @@ void RunAllTests()
     std::cout << XChlMajImp << std::endl << std::endl;
 
 
-    RunAllTests(WFilMaj.Data(), WRowMaj.Data(), XRowMajExp.Data(), XChlMajExp.Data(), XRowMajImp.Data(), XChlMajImp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, vStride, hStride, xPadTop, xPadBottom, xPadLeft, xPadRight);    
+    Test(WFilMaj.Data(), WRowMaj.Data(), XRowMajExp.Data(), XChlMajExp.Data(), XRowMajImp.Data(), XChlMajImp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, vStride, hStride, xPadTop, xPadBottom, xPadLeft, xPadRight);    
 }
 
-void PrintBenchmarkNames()
+void PrintHeader()
 {
     std::cout << "ForLoopConvolution, ";
     std::cout << "UnrolledInputConvolution, ";
@@ -272,9 +272,10 @@ void PrintBenchmarkNames()
     std::cout << "PartiallyUnrolledInputImplicitInPaddingConvolution, ";
     std::cout << "PartiallyUnrolledInputExplicitOutPaddingConvolution, ";
     std::cout << "PartiallyUnrolledInputExplicitPaddingConvolution";
+    std::cout << std::endl;
 }
 
-void RunAllBenchmarks(double testDuration, int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int xCount, int vStride, int hStride)
+void Benchmark(double testDuration, int xCount, int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int vStride, int hStride)
 {
     // output shape
     int yChls = wCount;
@@ -374,6 +375,7 @@ void RunAllBenchmarks(double testDuration, int wCount, int wRows, int wCols, int
         {
             Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
         });
+        std::cout << time << ", ";
     }
     else
     {
@@ -389,6 +391,7 @@ void RunAllBenchmarks(double testDuration, int wCount, int wRows, int wCols, int
         {
             Convolution(properties, WFilMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, space.data());
         });
+        std::cout << time << ", ";
     }
     else
     {
@@ -404,6 +407,7 @@ void RunAllBenchmarks(double testDuration, int wCount, int wRows, int wCols, int
         {
             Convolution(properties, WFilMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft, space.data());
         });
+        std::cout << time << ", ";
     }
     else
     {
@@ -419,6 +423,7 @@ void RunAllBenchmarks(double testDuration, int wCount, int wRows, int wCols, int
         {
             Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
         });
+        std::cout << time << ", ";
     }
     else
     {
@@ -433,6 +438,7 @@ void RunAllBenchmarks(double testDuration, int wCount, int wRows, int wCols, int
         {
             Convolution(properties, WRowMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols);
         });
+        std::cout << time << ", ";
     }
     else
     {
@@ -447,10 +453,11 @@ void RunAllBenchmarks(double testDuration, int wCount, int wRows, int wCols, int
         {
             Convolution(properties, WRowMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft);
         });
+        std::cout << time;// << ", ";
     }
     else
     {
-        std::cout << "n/a, ";
+        std::cout << "n/a";//, ";
     }
 }
 
@@ -471,12 +478,14 @@ int main(int argc, char** argv)
     int hStride = 1;
 
     // input shape
+    double testDuration = 1000;
     int xCount = 10;
 
-    double testDuration = 1000;
+    //Test();
+    //Test(wCount, wRows, wCols, wChls, yRows, yCols, vStride, hStride);
 
-    RunAllTests();
-
+    PrintHeader();
+    Benchmark(testDuration, xCount, wCount, wRows, wCols, wChls, yRows, yCols, vStride, hStride);
     return 0;
 }
 
