@@ -8,10 +8,17 @@ set(include
     include/ConvolutionProperties.h
     include/CSVParser.h
     include/ForLoopConvolution.h
-    include/PaddedConvolution.h
+    include/PartiallyUnrolledInputExplicitOutPaddingConvolution.h
+    include/PartiallyUnrolledInputExplicitPaddingConvolution.h
+    include/PartiallyUnrolledInputImplicitInPaddingConvolution.h
     include/Tensor.h
     include/TestHelpers.h
-    include/UnrolledConvolution.h
+    include/UnrolledInputChlMajInputConvolution.h
+    include/UnrolledInputConvolution.h
+    include/UnrolledInputExplicitOutPaddingConvolution.h
+    include/UnrolledInputExplicitPaddingConvolution.h
+    include/UnrolledInputImplicitInPaddingConvolution.h
+    include/UnrolledOutputConvolution.h
 )
 
 set(src

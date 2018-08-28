@@ -12,10 +12,18 @@
 #include "BlasHelpers.h"
 #include "ConvolutionProperties.h"
 #include "ForLoopConvolution.h"
-#include "PaddedConvolution.h"
-#include "UnrolledConvolution.h"
+#include "PartiallyUnrolledInputExplicitOutPaddingConvolution.h"
+#include "PartiallyUnrolledInputExplicitPaddingConvolution.h"
+#include "PartiallyUnrolledInputImplicitInPaddingConvolution.h"
 #include "Tensor.h"
 #include "TestHelpers.h"
+#include "UnrolledInputChlMajInputConvolution.h"
+#include "UnrolledInputConvolution.h"
+#include "UnrolledInputExplicitOutPaddingConvolution.h"
+#include "UnrolledInputExplicitPaddingConvolution.h"
+#include "UnrolledInputImplicitInPaddingConvolution.h"
+#include "UnrolledOutputConvolution.h"
+
 
 void RunAllTests(int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int xCount, int vStride, int hStride)
 {
