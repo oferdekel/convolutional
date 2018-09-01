@@ -37,7 +37,7 @@ void Convolution(ConvolutionProperties<ChannelMajorOutput, FilterMajorFilters, R
 {
     int yChls = wCount;
     int xRows = (yRows - 1) * vStride + wRows;
-    int xCols = yCols + wCols - 1;
+    int xCols = (yCols - 1) * hStride + wCols;
 
     // reshape the row-major input tensor X to a row-major matrix U
     int uRows = xRows * xCols;
@@ -53,18 +53,18 @@ void Convolution(ConvolutionProperties<ChannelMajorOutput, FilterMajorFilters, R
     ElementType* O = space;
     Gemm(true, false, false, uRows, vCols, uCols, 1, U, V, 0, O);
 
-    auto MultiVectorAdd = [&](ElementType* begin, int size, int count, int increment)
+    auto MultiVectorAdd = [&](ElementType* begin, int size, int count, int offset)
     {
         for(int i=0; i < count-1; ++i)
         {
-            Axpy(size, begin + i * increment, begin + (i + 1) * increment);
-            std::fill_n(begin + i * increment, size, (ElementType)0);
+            Axpy(size, begin + i * offset, begin + (i + 1) * offset);
+            std::fill_n(begin + i * offset, size, (ElementType)0);
         }
     };
 
     int size = yCols;
     int count = wCols;
-    int increment = uRows + hStride;
+    int offset = uRows + hStride;
 
     // collect values from the unrolled output
     for(int filter = 0; filter < wCount; ++filter) {
@@ -72,10 +72,9 @@ void Convolution(ConvolutionProperties<ChannelMajorOutput, FilterMajorFilters, R
 
             int xRow = yRow * vStride;
         
-            ElementType* first = O + filter * wRows * wCols * oRows + yRow * xCols;
-            const ElementType* last = first + (count-1) * increment;
-
-            MultiVectorAdd(first, size, count, increment);
+            ElementType* first = O + filter * wRows * wCols * oRows + xRow * xCols;
+            const ElementType* last = first + (count - 1) * offset;
+            MultiVectorAdd(first, size, count, offset);
 
             for(int wRow = 1; wRow < wRows; ++wRow) {
 
@@ -86,8 +85,8 @@ void Convolution(ConvolutionProperties<ChannelMajorOutput, FilterMajorFilters, R
                 Axpy(size, last, next);
 
                 first = next;
-                last = first + (count-1) * increment;
-                MultiVectorAdd(first, size, count, increment);
+                last = first + (count - 1) * offset;
+                MultiVectorAdd(first, size, count, offset);
             }
 
             ElementType* target = Y + (filter * yRows + yRow) * yCols;
