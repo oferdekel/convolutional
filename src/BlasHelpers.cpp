@@ -53,12 +53,20 @@ void BLASGemm(bool isRowMajor, bool transposeA, bool transposeB, int m, int n, i
 //    std::cout << CMat << std::endl << std::endl;
 }
 
-void BLASAxpy(int n, float alpha, const float* X, int incX, float* Y, int incY)
+void Axpy(int n, float alpha, const float* X, int incX, float* Y, int incY)
 {
     for(int i=0; i < n; ++i)
     {
         Y[i * incY] += alpha * X[i * incX];
     }
+}
+
+void Copy(int n, const float* X, int incX, float* Y, int incY)
+{
+    for(int i=0; i < n; ++i)
+    {
+        Y[i * incY] = X[i * incX];
+    }    
 }
 
 #endif
@@ -75,24 +83,3 @@ void Gemm(bool isARowMajor, bool isBRowMajor, bool isCRowMajor, int m, int n, in
     int ldc = isCRowMajor ? n : m;
     Gemm(isARowMajor, isBRowMajor, isCRowMajor, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 }
-
-void Axpy(int n, const float* X, float* Y)
-{
-    for(int i=0; i < n; ++i)
-    {
-        Y[i] += X[i];
-    }
-}
-
-void Axpy(int n, float alpha, const float* X, int incX, float* Y, int incY)
-{
-    if(alpha == 1 && incX == 1 && incY == 1)
-    {
-        Axpy(n, X, Y);
-    }
-    else
-    {
-        BLASAxpy(n, alpha, X, incX, Y, incY);
-    }
-}
-

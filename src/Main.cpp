@@ -477,8 +477,8 @@ int main(int argc, char** argv)
     int wCount = 3;
 
     // output shape
-    int yRows = 3;
-    int yCols = 3;
+    int yRows = 4;
+    int yCols = 5;
 
     // convolution strides
     int vStride = 2;
