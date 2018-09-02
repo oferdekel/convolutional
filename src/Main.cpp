@@ -55,19 +55,19 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
 
     // generate random input in both row-major and channel-major orders, and with both explicit and implicit zero-padding
     engine.seed(seed2);
-    auto XRowMajExp = GetRandomTensors<float, 3>(xCount, engine, { xRows, xCols, xChls }, RowMaj3Order, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});
+    auto XRowMajExp = GetRandomTensors<float, 3>(xCount, engine, { xRows, xCols, xChls }, RowMaj3, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});
     engine.seed(seed2);
-    auto XChlMajExp = GetRandomTensors<float, 3>(xCount, engine, { xRows, xCols, xChls }, ChlMaj3Order, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});
+    auto XChlMajExp = GetRandomTensors<float, 3>(xCount, engine, { xRows, xCols, xChls }, ChlMaj3, {xPadTop, xPadLeft, 0}, {xPadBottom, xPadRight, 0});
     engine.seed(seed2);
-    auto XRowMajImp = GetRandomTensors<float, 3>(xCount, engine, { yRows, yCols, xChls }, RowMaj3Order);
+    auto XRowMajImp = GetRandomTensors<float, 3>(xCount, engine, { yRows, yCols, xChls }, RowMaj3);
     engine.seed(seed2);
-    auto XChlMajImp = GetRandomTensors<float, 3>(xCount, engine, { yRows, yCols, xChls }, ChlMaj3Order);
+    auto XChlMajImp = GetRandomTensors<float, 3>(xCount, engine, { yRows, yCols, xChls }, ChlMaj3);
 
     // allocate output tensors
-    auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3Order);
-    auto YRowMajExp = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3Order);
-    auto YChlMaj = Tensor<float,3>({ yRows, yCols, yChls }, ChlMaj3Order);
-    auto YChlMajExp = Tensor<float,3>({ xRows, xCols, yChls }, ChlMaj3Order);
+    auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3);
+    auto YRowMajExp = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3);
+    auto YChlMaj = Tensor<float,3>({ yRows, yCols, yChls }, ChlMaj3);
+    auto YChlMajExp = Tensor<float,3>({ xRows, xCols, yChls }, ChlMaj3);
 
     // ForLoopConvolution
     {

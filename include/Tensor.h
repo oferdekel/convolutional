@@ -7,27 +7,27 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-// stl
-#include <algorithm> // for std::find
+#include <algorithm>
 #include <iostream>
-#include <random> // for std::normal_distribution
+#include <random>
 #include <vector>
 #include <array>
 #include <string>
 #include <initializer_list>
 
-template <int degree>
-using IntTuple = std::array<int, degree>;
+// convenient type used to store integer tuples
+template <int size>
+using IntTuple = std::array<int, size>;
 
-// predefined orderings
+// tensor ordering types and typical values
 using TensorOrder2 = IntTuple<2>;
 using TensorOrder3 = IntTuple<3>;
 using TensorOrder4 = IntTuple<4>;
 
 const TensorOrder2 RowMaj = { 1, 0 };
 const TensorOrder2 ColMaj = { 0, 1 };
-const TensorOrder3 RowMaj3Order = { 2, 1, 0 };
-const TensorOrder3 ChlMaj3Order = { 1, 0, 2 };
+const TensorOrder3 RowMaj3 = { 2, 1, 0 };
+const TensorOrder3 ChlMaj3 = { 1, 0, 2 };
 
 //
 // A Tensor is a multi-dimensional array, which can be represented in memory in different orders. A TensorConstInterface defines all of the const methods of a tensor. A TensorConstInterface does not own allocate its own memory.
@@ -178,7 +178,7 @@ Matrix<ElementType> GetMatrix(list<list<ElementType>> values, MatrixOrder order 
 }
 
 template <typename ElementType>
-Tensor<ElementType, 3> GetTensor3(list<list<list<ElementType>>> values, TensorOrder3 order = RowMaj3Order) 
+Tensor<ElementType, 3> GetTensor3(list<list<list<ElementType>>> values, TensorOrder3 order = RowMaj3) 
 {
     Tensor<ElementType, 3> tensor3({(int)values.size(), (int)values.begin()->size(), (int)values.begin()->begin()->size()}, order);
     
