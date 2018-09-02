@@ -10,23 +10,23 @@
 #include <tuple>
 
 // properties used to specialize the implementation of convolution 
-struct ChannelMajorInput{};
-struct ChannelMajorOutput{};
-struct ExplicitInputPadding{};
-struct ExplicitOutputPadding{};
-struct FilterMajorFilters{};
-struct ImplicitInputPadding{};
-struct OddField{};              // number of filter rows must be odd, number of filter columns must be odd
-struct PartiallyUnrolledInput{};
-struct RowMajorFilters{};
-struct RowMajorInput{};
-struct RowMajorOutput{};
-struct ThreeByThreeField{};     // number of filter rows and columns equals three
-struct UnitHorizontalStride{};
-struct UnitVerticalStride{};
-struct UnrolledInput{};
-struct UnrolledOutput{};
+struct ChannelMajorInput{};     // input is provided in channel major tensor order
+struct ChannelMajorOutput{};    // output is generated in channel major tensor order
+struct ExplicitInputPadding{};  // input tensor includes explicit zero-padding
+struct ExplicitOutputPadding{}; // output tensor includes explicit zero-padding
+struct FilterMajorFilters{};    // filter tensor is given in filter, row, column, channel major-to-minor order
+struct ImplicitInputPadding{};  // input should be processed with implicit zero-padding
+struct OddField{};              // odd receptive field size - number of filter rows must be odd, number of filter columns must be odd
+struct PartiallyUnrolledInput{};// input is unrolled piece by piece
+struct RowMajorFilters{};       // filter tensor is given in row, column, channel, filter major-to-minor order
+struct RowMajorInput{};         // input is provided in row major tensor order
+struct RowMajorOutput{};        // output is provided in row major tensor order
+struct ThreeByThreeField{};     // number of filter rows and columns must equal 3
+struct UnitHorizontalStride{};  // horizontal stride must equal 1
+struct UnitVerticalStride{};    // vertical stride must equal 1
+struct UnrolledInput{};         // input is unrolled 
+struct UnrolledOutput{};        // output is unrolled
 
-// convenient way of collecting an arbitrary number of properties
+// a convenient way of collecting an arbitrary number of properties in one type
 template<typename ... T>
 using ConvolutionProperties = std::tuple<T...>;

@@ -20,17 +20,17 @@
 // * output tensor in channel-major order
 // * requires temporary space of size (xRows * xCols * wCount * wRows * wCols)
 //
-// W - 4-dimensional weights tensor in filter-major order
-// X - 3-dimensional input tensor in row-major order
-// Y - 3-dimensional output tensor in row-major order
-// wCount - number of filters in W
-// wRows - number of rows in each filter in W
-// wCols - number of columns in each filter in W
-// wChls - number of channels in each filter in W
-// vStride - vertical stride
-// yRows - number of rows in the output tensor Y
-// yCols - number of columns in the output tensor Y
-// space - pointer to temporary space of size at least (xRows * xCols * wCount * wRows * wCols)
+// W: 4-dimensional weights tensor in filter-major order
+// X: 3-dimensional input tensor in row-major order
+// Y: 3-dimensional output tensor in row-major order
+// wCount: number of filters in W
+// wRows: number of rows in each filter in W
+// wCols: number of columns in each filter in W
+// wChls: number of channels in each filter in W
+// vStride: vertical stride
+// yRows: number of rows in the output tensor Y
+// yCols: number of columns in the output tensor Y
+// space: pointer to temporary space of size at least (xRows * xCols * wCount * wRows * wCols)
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ChannelMajorOutput, FilterMajorFilters, RowMajorInput, UnrolledOutput>,
     const ElementType* W, const ElementType* X, ElementType* Y, int wCount, int wRows, int wCols, int wChls, int vStride, int hStride, int yRows, int yCols, ElementType* space)

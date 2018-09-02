@@ -21,16 +21,16 @@
 // * output tensor in row-major order
 // * requires temporary space of size (wChls * yRows * yCols)
 //
-// W - 4-dimensional weights tensor in row-major order
-// X - 3-dimensional input tensor in row-major order
-// Y - 3-dimensional output tensor in row-major order
-// wCount - number of filters in W
-// wChls - number of channels in each filter in W
-// yRows - number of rows in the output tensor Y
-// yCols - number of columns in the output tensor Y
-// yPadTop - the number of implicit zero-padding rows at the top of the input
-// yPadLeft - the number of implicit zero-padding columns at the left of the input
-// space - pointer to temporary space of size at least (yRows * yCols * wChls)
+// W: 4-dimensional weights tensor in row-major order
+// X: 3-dimensional input tensor in row-major order
+// Y: 3-dimensional output tensor in row-major order
+// wCount: number of filters in W
+// wChls: number of channels in each filter in W
+// yRows: number of rows in the output tensor Y
+// yCols: number of columns in the output tensor Y
+// yPadTop: the number of implicit zero-padding rows at the top of the input
+// yPadLeft: the number of implicit zero-padding columns at the left of the input
+// space: pointer to temporary space of size at least (yRows * yCols * wChls)
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride>, 
     const ElementType* W, 

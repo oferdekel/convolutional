@@ -21,16 +21,16 @@
 // * output tensor in row-major order with (wRows - 1)/2 explicit padding rows on the top/bottom and (wCols - 1)/2 explicit padding columns on the left/right
 // * requires temporary space of size ((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls)
 //
-// W - 4-dimensional weights tensor in filter-major order
-// X - 3-dimensional input tensor in channel-major order
-// Y - 3-dimensional zero-padded output tensor in row-major order
-// wCount - number of filters in W
-// wRows - number of rows in each filter in W
-// wCols - number of columns in each filter in W
-// wChls - number of channels in each filter in W
-// yRows - number of rows in the output tensor Y
-// yCols - number of columns in the output tensor Y
-// space - pointer to temporary space of size at least ((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls)
+// W: 4-dimensional weights tensor in filter-major order
+// X: 3-dimensional input tensor in channel-major order
+// Y: 3-dimensional zero-padded output tensor in row-major order
+// wCount: number of filters in W
+// wRows: number of rows in each filter in W
+// wCols: number of columns in each filter in W
+// wChls: number of channels in each filter in W
+// yRows: number of rows in the output tensor Y
+// yCols: number of columns in the output tensor Y
+// space: pointer to temporary space of size at least ((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls)
 template <typename ElementType>
 void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput,  UnitHorizontalStride, UnitVerticalStride, UnrolledInput>, 
     const ElementType* W, 

@@ -105,36 +105,9 @@ private:
     }
 };
 
-//
-// A simple CSV line parser
-//
-
-template<typename ElementType, typename Iterator>
-void Split(const std::string& s, char delim, Iterator iterator)
-{
-    std::stringstream stream(s);
-    ElementParser<ElementType> parser;
-    std::string token;
-    while (std::getline(stream, token, delim))
-    {
-        try 
-        {
-            *(iterator++) = parser(token);
-        }
-        catch(...)
-        {
-            throw ParserException("token "s + token + " could not be parsed");
-        }
-    }
-}
-
+// tokenizes a string with a given delimeter character
 template <typename ElementType>
-std::vector<ElementType> Split(const std::string& s, char delim)
-{
-    std::vector<ElementType> elements;
-    Split<ElementType>(s, delim, std::back_inserter(elements));
-    return elements;
-}
+std::vector<ElementType> Split(const std::string& s, char delim);
 
 //
 // A simple CSV parser
@@ -176,6 +149,33 @@ private:
 //
 //
 //
+
+template<typename ElementType, typename Iterator>
+void Split(const std::string& s, char delim, Iterator iterator)
+{
+    std::stringstream stream(s);
+    ElementParser<ElementType> parser;
+    std::string token;
+    while (std::getline(stream, token, delim))
+    {
+        try 
+        {
+            *(iterator++) = parser(token);
+        }
+        catch(...)
+        {
+            throw ParserException("token "s + token + " could not be parsed");
+        }
+    }
+}
+
+template <typename ElementType>
+std::vector<ElementType> Split(const std::string& s, char delim)
+{
+    std::vector<ElementType> elements;
+    Split<ElementType>(s, delim, std::back_inserter(elements));
+    return elements;
+}
 
 template <typename ElementType>
 CSVParser<ElementType>::CSVParser(std::string filepath) : _stream(filepath)
