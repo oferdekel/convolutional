@@ -24,8 +24,8 @@ using TensorOrder2 = IntTuple<2>;
 using TensorOrder3 = IntTuple<3>;
 using TensorOrder4 = IntTuple<4>;
 
-const TensorOrder2 RowMaj2Order = { 1, 0 };
-const TensorOrder2 ColMaj2Order = { 0, 1 };
+const TensorOrder2 RowMaj = { 1, 0 };
+const TensorOrder2 ColMaj = { 0, 1 };
 const TensorOrder3 RowMaj3Order = { 2, 1, 0 };
 const TensorOrder3 ChlMaj3Order = { 1, 0, 2 };
 
@@ -160,7 +160,7 @@ template <typename T>
 using list = std::initializer_list<T>;
 
 template <typename ElementType>
-Matrix<ElementType> GetMatrix(list<list<ElementType>> values, MatrixOrder order = RowMaj2Order) 
+Matrix<ElementType> GetMatrix(list<list<ElementType>> values, MatrixOrder order = RowMaj) 
 {
     Matrix<ElementType> matrix({(int)values.size(), (int)values.begin()->size()}, order);
     int i = 0;

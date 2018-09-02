@@ -51,7 +51,7 @@ void Convolution(ConvolutionProperties<ChannelMajorOutput, FilterMajorFilters, R
     // use temp space to store the unrolled output matrix O in column-major order
     int oRows = uRows;    
     ElementType* O = space;
-    Gemm(true, false, false, uRows, vCols, uCols, 1, U, V, 0, O);
+    Gemm(RowMaj, ColMaj, ColMaj, uRows, vCols, uCols, 1, U, V, 0, O);
 
     auto MultiVectorAdd = [&](ElementType* begin, int size, int count, int increment, int offset)
     {

@@ -65,7 +65,7 @@ void Convolution(ConvolutionProperties<ExplicitOutputPadding, OddField, Partiall
        const ElementType* V = W + (wRow * wCols + wCol) * vSize;
 
         // perform the matrix-matrix multiplication
-        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, beta, Z);
+        Gemm(RowMaj, RowMaj, RowMaj, pRows, vCols, pCols, 1, P, V, beta, Z);
     };
 
     // process the TOP LEFT filter position across all channels

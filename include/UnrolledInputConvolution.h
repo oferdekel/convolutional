@@ -86,5 +86,5 @@ void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMaj
     ElementType* Z = Y;
 
     // matrix-matrix multiply
-    Gemm(true, false, true, uRows, vCols, uCols, 1, U, V, 0, Z);
+    Gemm(RowMaj, ColMaj, RowMaj, uRows, vCols, uCols, 1, U, V, 0, Z);
 }

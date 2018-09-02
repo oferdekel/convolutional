@@ -99,7 +99,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, 
         ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount + distToContent * vCols;
         
         // perform matrix multiplication
-        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
+        Gemm(RowMaj, RowMaj, RowMaj, pRows, vCols, pCols, 1, P, V, 1, Z);
     };
 
     // reset the output 

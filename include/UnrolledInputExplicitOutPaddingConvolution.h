@@ -85,7 +85,7 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding,
     ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
 
     // perform the matrix-matrix multiplication
-    Gemm(false, false, true, uRows, vCols, uCols, 1, U, V, 0, Z);
+    Gemm(ColMaj, ColMaj, RowMaj, uRows, vCols, uCols, 1, U, V, 0, Z);
 
     // delete the values that were written into the output padding
     int deleteSize = (wCols - 1) * wCount;

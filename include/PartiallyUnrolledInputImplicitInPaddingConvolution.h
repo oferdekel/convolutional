@@ -58,7 +58,7 @@ void Convolution(ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledIn
         ElementType* Z = Y + yRow * vCols;
 
         // perform matrix multiplication
-        Gemm(true, true, true, pRows, vCols, pCols, 1, P, V, 1, Z);
+        Gemm(RowMaj, RowMaj, RowMaj, pRows, vCols, pCols, 1, P, V, 1, Z);
     };
 
     // define a helper function that handles a single spatial filter position without copying input data

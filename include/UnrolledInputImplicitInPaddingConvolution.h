@@ -110,6 +110,6 @@ void Convolution(ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, Im
     ElementType* Z = Y;
 
     // matrix-matrix multiply
-    Gemm(false, false, true, uRows, vCols, uCols, 1, U, V, 0, Z);
+    Gemm(ColMaj, ColMaj, RowMaj, uRows, vCols, uCols, 1, U, V, 0, Z);
 }
 
