@@ -6,11 +6,15 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <random>
+#include <exception>
 #include <iostream>
+#include <random>
+#include <string>
+#include <vector>
 
 #include "BlasHelpers.h"
 #include "ConvolutionProperties.h"
+#include "CSVParser.h"
 #include "ForLoopConvolution.h"
 #include "PartiallyUnrolledInputExplicitOutPaddingConvolution.h"
 #include "PartiallyUnrolledInputExplicitPaddingConvolution.h"
@@ -23,7 +27,6 @@
 #include "UnrolledInputExplicitPaddingConvolution.h"
 #include "UnrolledInputImplicitInPaddingConvolution.h"
 #include "UnrolledOutputConvolution.h"
-
 
 void Test(const float* WFilMaj, const float* WRowMaj, const float* XRowMajExp, const float* XChlMajExp, const float* XRowMajImp, const float* XChlMajImp, int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int vStride, int hStride, int xPadTop, int xPadBottom, int xPadLeft, int xPadRight)
 {
@@ -263,23 +266,7 @@ void Test()
     std::cout << "Channel-Major Implicitly-Padded X" << std::endl;
     std::cout << XChlMajImp << std::endl << std::endl;
 
-
     Test(WFilMaj.Data(), WRowMaj.Data(), XRowMajExp.Data(), XChlMajExp.Data(), XRowMajImp.Data(), XChlMajImp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, vStride, hStride, xPadTop, xPadBottom, xPadLeft, xPadRight);    
-}
-
-void PrintHeader()
-{
-    std::cout << "ForLoopConvolution, ";
-    std::cout << "UnrolledInputConvolution, ";
-    std::cout << "UnrolledInputChlMajInputConvolution, ";
-    std::cout << "UnrolledOutputConvolution, ";
-    std::cout << "UnrolledInputImplicitInPaddingConvolution, ";
-    std::cout << "UnrolledInputExplicitOutPaddingConvolution, ";
-    std::cout << "UnrolledInputExplicitPaddingConvolution, ";
-    std::cout << "PartiallyUnrolledInputImplicitInPaddingConvolution, ";
-    std::cout << "PartiallyUnrolledInputExplicitOutPaddingConvolution, ";
-    std::cout << "PartiallyUnrolledInputExplicitPaddingConvolution";
-    std::cout << std::endl;
 }
 
 void Benchmark(double testDuration, int xCount, int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int vStride, int hStride)
@@ -460,39 +447,79 @@ void Benchmark(double testDuration, int xCount, int wCount, int wRows, int wCols
         {
             Convolution(properties, WRowMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft);
         });
-        std::cout << time;// << ", ";
+        std::cout << time << std::endl;
     }
     else
     {
-        std::cout << "n/a";//, ";
+        std::cout << "n/a" << std::endl;
     }
 }
 
 int main(int argc, char** argv)
 {
-    // filter shape
-    int wRows = 3;
-    int wCols = 3;
-    int wChls = 2;
-    int wCount = 3;
+    if(argc != 2)
+    {
+        std::cout << "usage: convolutional <benchmark.csv>\n";
+        exit(1);
+    }
 
-    // output shape
-    int yRows = 4;
-    int yCols = 5;
+    auto parser = CSVParser<int>(argv[1]);
 
-    // convolution strides
-    int vStride = 2;
-    int hStride = 1;
+    if(!parser.IsValid())
+    {
+        std::cout << "error openning and parsing file " << argv[1] << std::endl;
+        exit(1);
+    }
+    
+    std::vector<std::string> requiredKeys = {"wCount", "wRows", "wCols", "wChls", "yRows", "yCols", "vStride", "hStride"};
+    if(!parser.HeaderContains(requiredKeys))
+    {
+        std::cout << argv[1] << " missing required columns\n";
+        exit(1);
+    }
 
-    // input shape
+    // print the output header
+    for(auto key : requiredKeys)
+    {
+        std::cout << key << ", ";
+    }
+
+    std::cout << "ForLoopConvolution, ";
+    std::cout << "UnrolledInputConvolution, ";
+    std::cout << "UnrolledInputChlMajInputConvolution, ";
+    std::cout << "UnrolledOutputConvolution, ";
+    std::cout << "UnrolledInputImplicitInPaddingConvolution, ";
+    std::cout << "UnrolledInputExplicitOutPaddingConvolution, ";
+    std::cout << "UnrolledInputExplicitPaddingConvolution, ";
+    std::cout << "PartiallyUnrolledInputImplicitInPaddingConvolution, ";
+    std::cout << "PartiallyUnrolledInputExplicitOutPaddingConvolution, ";
+    std::cout << "PartiallyUnrolledInputExplicitPaddingConvolution";
+    std::cout << std::endl;
+
+    // run benchmarks
     double testDuration = 1000;
     int xCount = 10;
 
-    //Test();
-    Test(wCount, wRows, wCols, wChls, yRows, yCols, vStride, hStride);
+    try
+    {
+        while(parser.IsValid())
+        {
+            auto parameters = parser[requiredKeys];
+            for(auto p : parameters)
+            {
+                std::cout << p << ", ";
+            }
+            
+            Benchmark(testDuration, xCount, parser["wCount"], parser["wRows"], parser["wCols"], parser["wChls"], parser["yRows"], parser["yCols"], parser["vStride"], parser["hStride"]);
+            parser.Next();
+        }
+    }
+    catch(ParserException e)
+    {
+        std::cerr << e.what() << std::endl;
+        exit(1);
+    }
 
-//    PrintHeader();
-//    Benchmark(testDuration, xCount, wCount, wRows, wCols, wChls, yRows, yCols, vStride, hStride);
     return 0;
 }
 

@@ -22,6 +22,16 @@
 using namespace std::string_literals;
 
 //
+// Parser exception class
+//
+
+class ParserException : public std::runtime_error
+{
+public:
+    using std::runtime_error::runtime_error;
+};
+
+//
 // Element parser specializations
 //
 
@@ -107,7 +117,14 @@ void Split(const std::string& s, char delim, Iterator iterator)
     std::string token;
     while (std::getline(stream, token, delim))
     {
-        *(iterator++) = parser(token);
+        try 
+        {
+            *(iterator++) = parser(token);
+        }
+        catch(...)
+        {
+            throw ParserException("token "s + token + " could not be parsed");
+        }
     }
 }
 
@@ -141,8 +158,14 @@ public:
     // returns a sorted version of the header
     const std::vector<std::string>& GetHeader() const { return _header; }
 
-    // returns the current vector of elements
-    const MapType& GetMap() const { return _map; }
+    // checks that the header constains each of the provided keys
+    bool HeaderContains(std::vector<std::string> keys) const;
+
+    // returns the current value of a specified column
+    ElementType operator[](std::string key) const { return _map.at(key); }
+
+    // returns the current values that correspond to a given vector of keys
+    std::vector<ElementType> operator[](std::vector<std::string> keys) const;
 
 private:
     std::ifstream _stream;
@@ -159,7 +182,7 @@ CSVParser<ElementType>::CSVParser(std::string filepath) : _stream(filepath)
 {
     if (!_stream.is_open())
     {
-        throw std::runtime_error("could not open "s + filepath);
+        return;
     }
 
     // read header line
@@ -174,27 +197,61 @@ CSVParser<ElementType>::CSVParser(std::string filepath) : _stream(filepath)
 template <typename ElementType>
 void CSVParser<ElementType>::Next()
 {
+    const std::string whitespace = " \t\n\v\f\r";
+
     _map.clear();
     std::string line;
-    while (line.length() == 0 && _stream.good())
-    {
-        std::getline(_stream, line);
-    }
+    bool success = false;
 
-    if (!_stream.good())
+    while(!success)
     {
-        return;
+        if (!_stream.good())
+        {
+            return;
+        }
+
+        std::getline(_stream, line);
+
+        if(line.length() == 0)
+        {
+            continue;
+        }
+
+        auto pos = line.find_first_not_of(whitespace);
+        if(pos == std::string::npos || line[pos] == '#')
+        {
+            continue;
+        }
+
+        success = true;
     }
 
     auto elements = Split<ElementType>(line, ',');
 
     if (elements.size() != _header.size())
     {
-        throw std::runtime_error("expected "s + std::to_string(_header.size()) + " parameters but only found " + std::to_string(elements.size()));
+        throw ParserException("expected "s + std::to_string(_header.size()) + " parameters but only found " + std::to_string(elements.size()));
     }
 
     for (size_t i = 0; i < _header.size(); ++i)
     {
         _map[_header[i]] = elements[i];
     }
+}
+
+template <typename ElementType>
+bool CSVParser<ElementType>::HeaderContains(std::vector<std::string> keys) const
+{
+    auto header = GetHeader();
+    std::sort(header.begin(), header.end());
+    std::sort(keys.begin(), keys.end());
+    return std::includes(header.begin(), header.end(), keys.begin(), keys.end());
+}
+
+template <typename ElementType>
+std::vector<ElementType> CSVParser<ElementType>::operator[](std::vector<std::string> keys) const
+{
+    std::vector<ElementType> values;
+    std::transform(keys.begin(), keys.end(), std::back_inserter(values), [&](const std::string& key) {return _map.at(key);});
+    return values;
 }
