@@ -12,22 +12,18 @@
 #include <functional>
 #include <chrono>
 
-using TestType = std::function<Tensor<float,3>()>;
-
 template <typename ElementType>
 using BenchmarkType = std::function<void(const ElementType* X)>;
 
-void RunTest(TestType test);
-
 template <typename ElementType, typename TensorType>
-double RunBenchmark(double testDuration, const std::vector<TensorType>& inputs, BenchmarkType<ElementType> benchmark);
+double GetMeanExecutionTime(double testDuration, const std::vector<TensorType>& inputs, BenchmarkType<ElementType> benchmark);
 
 //
 //
 //
 
 template <typename ElementType, typename TensorType>
-double RunBenchmark(double testDuration, const std::vector<TensorType>& inputs, BenchmarkType<ElementType> benchmark)
+double GetMeanExecutionTime(double testDuration, const std::vector<TensorType>& inputs, BenchmarkType<ElementType> benchmark)
 {
     // warm up the caches
     for(const auto& input : inputs)

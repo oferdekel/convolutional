@@ -24,7 +24,6 @@ set(include
 set(src
     src/BlasHelpers.cpp
     src/Main.cpp
-    src/TestHelpers.cpp
 )
 
 source_group("src" FILES ${src})
