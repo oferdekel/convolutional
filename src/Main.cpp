@@ -220,11 +220,17 @@ int main(int argc, char** argv)
         exit(1);
     }
 
+    if(std::string(argv[1]) == "-i")
+    {
+        std::cout << "Blas version: " << BLAS_VERSION << std::endl; 
+        exit(0);
+    }
+
     auto parser = CSVParser<int>(argv[1]);
 
     if(!parser.IsValid())
     {
-        std::cout << "error openning and parsing file " << argv[1] << std::endl;
+        std::cout << "error opening and parsing file " << argv[1] << std::endl;
         exit(1);
     }
     
@@ -254,7 +260,7 @@ int main(int argc, char** argv)
     std::cout << std::endl;
 
     // run benchmarks
-    double testDuration = 1000;
+    double testDuration = 5000;
     int xCount = 10;
 
     try

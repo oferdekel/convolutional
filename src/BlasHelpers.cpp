@@ -8,10 +8,11 @@
 
 #include "BlasHelpers.h"
 
-#ifdef USE_BLAS
+// stl
+#include <iostream>
 
-// BLAS
-#include <cblas.h>
+#ifdef USE_BLAS
+#include BLAS_HEADER_FILE
 
 void Gemm(MatrixOrder matrixOrderC, bool transposeA, bool transposeB, int m, int n, int k, float alpha, const float* A, int lda, const float* B, int ldb, float beta, float* C, int ldc)
 {
@@ -20,6 +21,16 @@ void Gemm(MatrixOrder matrixOrderC, bool transposeA, bool transposeB, int m, int
     CBLAS_TRANSPOSE blasTransposeB = transposeB ? CBLAS_TRANSPOSE::CblasTrans : CBLAS_TRANSPOSE::CblasNoTrans;
 
     cblas_sgemm(blasOrder, blasTransposeA, blasTransposeB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+}
+
+void Axpy(int n, float alpha, const float* X, int incX, float* Y, int incY)
+{
+    cblas_saxpy(n, alpha, X, incX, Y, incY);
+}
+
+void Copy(int n, const float* X, int incX, float* Y, int incY)
+{
+    cblas_scopy(n, X, incX, Y, incY);
 }
 
 #else
@@ -67,6 +78,11 @@ void Copy(int n, const float* X, int incX, float* Y, int incY)
     }    
 }
 
+void PrintBlasInfo()
+{
+    std::cout << "BLAS not used\n";
+}
+
 #endif
 
 void Gemm(MatrixOrder matrixOrderA, MatrixOrder matrixOrderB, MatrixOrder matrixOrderC, int m, int n, int k, float alpha, const float* A, int lda, const float* B, int ldb, float beta, float* C, int ldc)
@@ -81,3 +97,4 @@ void Gemm(MatrixOrder matrixOrderA, MatrixOrder matrixOrderB, MatrixOrder matrix
     int ldc = (matrixOrderC == RowMaj) ? n : m;
     Gemm(matrixOrderA, matrixOrderB, matrixOrderC, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 }
+

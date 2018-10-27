@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 project(convolutional)
 set(target_name convolutional)
 
+# files
 set(include
     include/BlasHelpers.h
     include/ConvolutionProperties.h
@@ -28,39 +29,37 @@ set(src
 
 source_group("src" FILES ${src})
 source_group("include" FILES ${include})
-
-# Turn on ability to create folders to organize projects
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-# Setup Blas
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
-include(OpenBLASSetup)
-find_package(BLAS)
-if(BLAS_FOUND)
-    message(STATUS "Blas libraries: ${BLAS_LIBRARIES}")
-    message(STATUS "Blas linker flags: ${BLAS_LINKER_FLAGS}")
-    message(STATUS "Blas vendor: ${BLA_VENDOR}")
-endif()
 
 # Set C++ version
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Compilaiton flags
-if(MSVC)
-  add_compile_options(/O2)
-  add_compile_options(/Ob2)
-  add_compile_options(/Ot)
-else()
-  add_compile_options(-O3)
-endif()
-
 # create executable in build\bin
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-# message
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin)
 add_executable(${target_name} ${src} ${include})
 target_include_directories(${target_name} PRIVATE include)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
+include(BlasConfig)
+if(USE_BLAS)
+    message(STATUS "Blas vendor: ${BLA_VENDOR}")
+    message(STATUS "Blas libraries: ${BLAS_LIBRARIES}")
+    message(STATUS "Blas include directories: ${BLAS_INCLUDE_DIRS}")
+    message(STATUS "Blas dlls: ${BLAS_DLLS}")
+
+    if(BLAS_COPY_DLLS)
+        foreach(DLL ${BLAS_COPY_DLLS})
+            add_custom_command(TARGET ${target_name} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DLL} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
+            )
+        endforeach()
+    endif()
+
+    add_definitions(-DUSE_BLAS)
+    add_definitions(-DBLAS_HEADER_FILE="${BLAS_HEADER_FILE}")
+    add_definitions(-DBLAS_VERSION="${BLAS_VERSION}")
+    target_include_directories(${target_name} SYSTEM PUBLIC ${BLAS_INCLUDE_DIRS})
+    target_link_libraries(${target_name} ${BLAS_LIBRARIES})
+endif()
 
