@@ -1,5 +1,5 @@
 mkdir build_gcc
 cd build_gcc
-cmake ..
+cmake -DBLAS_VERSION=ubuntuopenblas ..
 cmake --build .
 cd ..

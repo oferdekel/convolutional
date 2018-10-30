@@ -43,11 +43,6 @@ target_include_directories(${target_name} PRIVATE include)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 include(BlasConfig)
 if(USE_BLAS)
-    message(STATUS "Blas vendor: ${BLA_VENDOR}")
-    message(STATUS "Blas libraries: ${BLAS_LIBRARIES}")
-    message(STATUS "Blas include directories: ${BLAS_INCLUDE_DIRS}")
-    message(STATUS "Blas dlls: ${BLAS_DLLS}")
-
     if(BLAS_COPY_DLLS)
         foreach(DLL ${BLAS_COPY_DLLS})
             add_custom_command(TARGET ${target_name} POST_BUILD
