@@ -212,6 +212,10 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     }
 }
 
+#ifndef BLAS_VERSION
+#define BLAS_VERSION "none"
+#endif
+
 int main(int argc, char** argv)
 {
     if(argc != 2)
