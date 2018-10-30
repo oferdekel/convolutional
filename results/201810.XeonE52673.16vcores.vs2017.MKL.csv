@@ -418,4 +418,3 @@ wCount, wRows, wCols, wChls, yRows, yCols, vStride, hStride, ForLoopConvolution,
 64, 3, 3, 512, 256, 256, 2, 2, 22099.1, 387.05, n/a, 367.1, n/a, n/a, n/a, n/a, n/a, n/a
 128, 3, 3, 512, 256, 256, 2, 2, 44205.8, 405.1, n/a, 693.5, n/a, n/a, n/a, n/a, n/a, n/a
 256, 3, 3, 512, 256, 256, 2, 2, 88492.2, 496.6, n/a, 1333.1, n/a, n/a, n/a, n/a, n/a, n/a
-512, 3, 3, 512, 256, 256, 2, 2, 177008, 634.5, n/a, 2252.6, n/a, n/a, n/a, n/a, n/a, n/a
