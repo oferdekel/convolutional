@@ -27,3 +27,17 @@ if(${BLAS_VERSION} MATCHES "winopenblas")
     add_definitions(-DC_MSVC)
     set(USE_BLAS TRUE)
 endif()
+
+if(${BLAS_VERSION} MATCHES "winopenblas219") 
+    set(BLAS_COPY_DLLS 
+        /OpenBLASLibs.0.2.19.3/build/native/x64/haswell/bin/libopenblas.dll
+        /OpenBLASLibs.0.2.19.3/build/native/x64/haswell/bin/libgfortran-3.dll
+        /OpenBLASLibs.0.2.19.3/build/native/x64/haswell/bin/libquadmath-0.dll
+        /OpenBLASLibs.0.2.19.3/build/native/x64/haswell/bin/libgcc_s_seh-1.dll
+    )
+    set(BLAS_HEADER_FILE "cblas.h")
+    set(BLAS_INCLUDE_DIRS /OpenBLASLibs.0.2.19.3/build/native/x64/haswell/include)
+    set(BLAS_LIBRARIES /OpenBLASLibs.0.2.19.3/build/native/x64/haswell/lib/libopenblas.dll.a)
+    add_definitions(-DC_MSVC)
+    set(USE_BLAS TRUE)
+endif()
