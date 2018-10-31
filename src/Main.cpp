@@ -82,24 +82,38 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     // UnrolledInputConvolution
     {
         auto properties = ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
-        auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
-        auto time = GetMeanExecutionTime<float>(testDuration, XRowMajExp, [&](const float* X)
+        try
         {
-            Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
-        });
-        std::cout << time << ", ";
+            auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
+            auto time = GetMeanExecutionTime<float>(testDuration, XRowMajExp, [&](const float* X)
+            {
+                Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << time << "mem, ";
+        }
     }
 
     // UnrolledInputChlMajInputConvolution
     if(hStride == 1)
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
-        auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
-        auto time = GetMeanExecutionTime<float>(testDuration, XChlMajExp, [&](const float* X)
+        try
         {
-            Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
-        });
-        std::cout << time << ", ";
+            auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
+            auto time = GetMeanExecutionTime<float>(testDuration, XChlMajExp, [&](const float* X)
+            {
+                Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << time << "mem, ";
+        }
     }
     else
     {
@@ -109,24 +123,38 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     // UnrolledOutputConvolution
     {
         auto properties = ConvolutionProperties<ChannelMajorOutput, FilterMajorFilters, RowMajorInput, UnrolledOutput>{};
-        auto space = std::vector<float>(xRows * xCols * wCount * wRows * wCols);
-        auto time = GetMeanExecutionTime<float>(testDuration, XRowMajExp, [&](const float* X)
+        try
         {
-            Convolution(properties, WFilMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
-        });
-        std::cout << time << ", ";
+            auto space = std::vector<float>(xRows * xCols * wCount * wRows * wCols);
+            auto time = GetMeanExecutionTime<float>(testDuration, XRowMajExp, [&](const float* X)
+            {
+                Convolution(properties, WFilMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << time << "mem, ";
+        }
     }
 
     // UnrolledInputImplicitInPaddingConvolution
     if(wRows == 3 && wCols == 3 && vStride == 1 && hStride == 1)
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
-        auto space = std::vector<float>(9 * wChls * yRows * yCols);
-        auto time = GetMeanExecutionTime<float>(testDuration, XChlMajImp, [&](const float* X)
+        try
         {
-            Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
-        });
-        std::cout << time << ", ";
+            auto space = std::vector<float>(9 * wChls * yRows * yCols);
+            auto time = GetMeanExecutionTime<float>(testDuration, XChlMajImp, [&](const float* X)
+            {
+                Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << time << "mem, ";
+        }
     }
     else
     {
@@ -137,12 +165,19 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     if(vStride == 1 && hStride == 1)
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
-        auto space = std::vector<float>((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
-        auto time = GetMeanExecutionTime<float>(testDuration, XChlMajExp, [&](const float* X)
+        try
         {
-            Convolution(properties, WFilMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, space.data());
-        });
-        std::cout << time << ", ";
+            auto space = std::vector<float>((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
+            auto time = GetMeanExecutionTime<float>(testDuration, XChlMajExp, [&](const float* X)
+            {
+                Convolution(properties, WFilMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << time << "mem, ";
+        }
     }
     else
     {
@@ -153,12 +188,19 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     if(vStride == 1 && hStride == 1)
     {
         auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
-        auto space = std::vector<float>((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
-        auto time = GetMeanExecutionTime<float>(testDuration, XChlMajExp, [&](const float* X)
+        try
         {
-            Convolution(properties, WFilMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft, space.data());
-        });
-        std::cout << time << ", ";
+            auto space = std::vector<float>((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
+            auto time = GetMeanExecutionTime<float>(testDuration, XChlMajExp, [&](const float* X)
+            {
+                Convolution(properties, WFilMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << time << "mem, ";
+        }
     }
     else
     {
@@ -169,12 +211,19 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     if(wRows == 3 && wCols == 3 && vStride == 1 && hStride == 1)
     {
         auto properties = ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride>{};
-        auto space = std::vector<float>(yRows * yCols * wChls);
-        auto time = GetMeanExecutionTime<float>(testDuration, XRowMajImp, [&](const float* X)
+        try
         {
-            Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
-        });
-        std::cout << time << ", ";
+            auto space = std::vector<float>(yRows * yCols * wChls);
+            auto time = GetMeanExecutionTime<float>(testDuration, XRowMajImp, [&](const float* X)
+            {
+                Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << time << "mem, ";
+        }
     }
     else
     {
@@ -277,7 +326,14 @@ int main(int argc, char** argv)
                 std::cout << p << ", ";
             }
             
-            RunBenchmark(testDuration, xCount, parser["wCount"], parser["wRows"], parser["wCols"], parser["wChls"], parser["yRows"], parser["yCols"], parser["vStride"], parser["hStride"]);
+            try
+            {
+                RunBenchmark(testDuration, xCount, parser["wCount"], parser["wRows"], parser["wCols"], parser["wChls"], parser["yRows"], parser["yCols"], parser["vStride"], parser["hStride"]);
+            }
+            catch(...)
+            {
+                std::cout << "error\n";
+            }
             parser.Next();
         }
     }
