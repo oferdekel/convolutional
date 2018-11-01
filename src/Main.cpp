@@ -93,7 +93,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
         catch(...)
         {
-            std::cout << time << "mem, ";
+            std::cout << "mem, ";
         }
     }
 
@@ -112,7 +112,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
         catch(...)
         {
-            std::cout << time << "mem, ";
+            std::cout << "mem, ";
         }
     }
     else
@@ -134,7 +134,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
         catch(...)
         {
-            std::cout << time << "mem, ";
+            std::cout << "mem, ";
         }
     }
 
@@ -153,7 +153,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
         catch(...)
         {
-            std::cout << time << "mem, ";
+            std::cout << "mem, ";
         }
     }
     else
@@ -176,7 +176,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
         catch(...)
         {
-            std::cout << time << "mem, ";
+            std::cout << "mem, ";
         }
     }
     else
@@ -199,7 +199,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
         catch(...)
         {
-            std::cout << time << "mem, ";
+            std::cout << "mem, ";
         }
     }
     else
@@ -222,7 +222,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
         catch(...)
         {
-            std::cout << time << "mem, ";
+            std::cout << "mem, ";
         }
     }
     else
