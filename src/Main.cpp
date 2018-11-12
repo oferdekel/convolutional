@@ -441,7 +441,7 @@ int main(int argc, char** argv)
     std::cout << std::endl;
 
     // run benchmarks
-    double testDuration = 5000;
+    double testDuration = 2000;
     int xCount = 10;
 
     try
