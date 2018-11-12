@@ -6,20 +6,20 @@ set(target_name convolutional)
 # files
 set(include
     include/BlasHelpers.h
-    include/ConvolutionProperties.h
+    include/ConvProperties.h
     include/CSVParser.h
-    include/ForLoopConvolution.h
-    include/PartiallyUnrolledInputExplicitOutPaddingConvolution.h
-    include/PartiallyUnrolledInputExplicitPaddingConvolution.h
-    include/PartiallyUnrolledInputImplicitInPaddingConvolution.h
+    include/ForLoopConv.h
+    include/PartiallyUnrolledInputExplicitOutPaddingConv.h
+    include/PartiallyUnrolledInputExplicitPaddingConv.h
+    include/PartiallyUnrolledInputImplicitInPaddingConv.h
     include/Tensor.h
     include/TestHelpers.h
-    include/UnrolledInputChlMajInputConvolution.h
-    include/UnrolledInputConvolution.h
-    include/UnrolledInputExplicitOutPaddingConvolution.h
-    include/UnrolledInputExplicitPaddingConvolution.h
-    include/UnrolledInputImplicitInPaddingConvolution.h
-    include/UnrolledOutputConvolution.h
+    include/UnrolledInputConv_cI.h
+    include/UnrolledInputConv_rI.h
+    include/UnrolledInputExplicitOutPaddingConv.h
+    include/UnrolledInputExplicitPaddingConv.h
+    include/UnrolledInputImplicitInPaddingConv.h
+    include/UnrolledOutputConv.h
 )
 
 set(src
