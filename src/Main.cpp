@@ -19,8 +19,8 @@
 #include "PartiallyUnrolledInputImplicitInPaddingConv.h"
 #include "Tensor.h"
 #include "TestHelpers.h"
-#include "UnrolledInputChlMajInputConv.h"
-#include "UnrolledInputRowMajInputConv.h"
+#include "UnrolledInputConv_CI.h"
+#include "UnrolledInputConv_RI.h"
 #include "UnrolledInputExplicitOutPaddingConv.h"
 #include "UnrolledInputExplicitPaddingConv.h"
 #include "UnrolledInputImplicitInPaddingConv.h"
@@ -79,7 +79,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << time << ", ";
     }
 
-    // UnrolledInputRowMajInputFilMajFiltersConv
+    // UnrolledInputConv_RIFF
     {
         auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         try
@@ -97,7 +97,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputRowMajInputRowMajFiltersConv
+    // UnrolledInputConv_RIRF
     {
         auto properties = ConvProperties<RowMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         try
@@ -115,7 +115,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputChlMajInputFilMajFiltersConv
+    // UnrolledInputConv_CIFF
     if(hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
@@ -138,7 +138,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // UnrolledInputChlMajInputRowMajFiltersConv
+    // UnrolledInputConv_CIRF
     if(hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
@@ -342,10 +342,10 @@ int main(int argc, char** argv)
     }
 
     std::cout << "ForLoopConv, ";
-    std::cout << "UnrolledInputRowMajInputFilMajFiltersConv, ";
-    std::cout << "UnrolledInputRowMajInputRowMajFiltersConv, ";
-    std::cout << "UnrolledInputChlMajInputFilMajFiltersConv, ";
-    std::cout << "UnrolledInputChlMajInputRowMajFiltersConv, ";
+    std::cout << "UnrolledInputConv_RIFF, ";
+    std::cout << "UnrolledInputConv_RIRF, ";
+    std::cout << "UnrolledInputConv_CIFF, ";
+    std::cout << "UnrolledInputConv_CIRF, ";
     std::cout << "UnrolledOutputConv, ";
     std::cout << "UnrolledInputImplicitInPaddingConv, ";
     std::cout << "UnrolledInputExplicitOutPaddingConv, ";
