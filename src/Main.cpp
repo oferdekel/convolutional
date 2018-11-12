@@ -79,7 +79,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << time << ", ";
     }
 
-    // UnrolledInputConv_RIFF
+    // UnrolledInputConv_RIFFRO
     {
         auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         try
@@ -97,7 +97,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputConv_RIRF
+    // UnrolledInputConv_RIRFRO
     {
         auto properties = ConvProperties<RowMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         try
@@ -115,7 +115,43 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputConv_CIFF
+    // UnrolledInputConv_RIFFCO
+    {
+        auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, ChannelMajorOutput, UnrolledInput>{};
+        try
+        {
+            auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
+            auto time = GetMeanExecutionTime<float>(testDuration, XRowMajExp, [&](const float* X)
+            {
+                Convolution(properties, WFilMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << "mem, ";
+        }
+    }
+
+    // UnrolledInputConv_RIRFCO
+    {
+        auto properties = ConvProperties<RowMajorFilters, RowMajorInput, ChannelMajorOutput, UnrolledInput>{};
+        try
+        {
+            auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
+            auto time = GetMeanExecutionTime<float>(testDuration, XRowMajExp, [&](const float* X)
+            {
+                Convolution(properties, WRowMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << "mem, ";
+        }
+    }
+
+    // UnrolledInputConv_CIFFRO
     if(hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
@@ -138,7 +174,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // UnrolledInputConv_CIRF
+    // UnrolledInputConv_CIRFRO
     if(hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
@@ -148,6 +184,52 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
             auto time = GetMeanExecutionTime<float>(testDuration, XChlMajExp, [&](const float* X)
             {
                 Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << "mem, ";
+        }
+    }
+    else
+    {
+        std::cout << "n/a, ";
+    }
+
+    // UnrolledInputConv_CIFFCO
+    if(hStride == 1)
+    {
+        auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, ChannelMajorOutput, UnitHorizontalStride, UnrolledInput>{};
+        try
+        {
+            auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
+            auto time = GetMeanExecutionTime<float>(testDuration, XChlMajExp, [&](const float* X)
+            {
+                Convolution(properties, WFilMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << "mem, ";
+        }
+    }
+    else
+    {
+        std::cout << "n/a, ";
+    }
+
+    // UnrolledInputConv_CIRFCO
+    if(hStride == 1)
+    {
+        auto properties = ConvProperties<ChannelMajorInput, RowMajorFilters, ChannelMajorOutput, UnitHorizontalStride, UnrolledInput>{};
+        try
+        {
+            auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
+            auto time = GetMeanExecutionTime<float>(testDuration, XChlMajExp, [&](const float* X)
+            {
+                Convolution(properties, WRowMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
             });
             std::cout << time << ", ";
         }
@@ -342,8 +424,10 @@ int main(int argc, char** argv)
     }
 
     std::cout << "ForLoopConv, ";
-    std::cout << "UnrolledInputConv_RIFF, ";
-    std::cout << "UnrolledInputConv_RIRF, ";
+    std::cout << "UnrolledInputConv_RIFFRO, ";
+    std::cout << "UnrolledInputConv_RIRFRO, ";
+    std::cout << "UnrolledInputConv_RIFFCO, ";
+    std::cout << "UnrolledInputConv_RIRFCO, ";
     std::cout << "UnrolledInputConv_CIFF, ";
     std::cout << "UnrolledInputConv_CIRF, ";
     std::cout << "UnrolledOutputConv, ";
