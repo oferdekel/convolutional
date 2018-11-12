@@ -19,8 +19,8 @@
 #include "PartiallyUnrolledInputImplicitInPaddingConv.h"
 #include "Tensor.h"
 #include "TestHelpers.h"
-#include "UnrolledInputConv_CI.h"
-#include "UnrolledInputConv_RI.h"
+#include "UnrolledInputConv_cI.h"
+#include "UnrolledInputConv_rI.h"
 #include "UnrolledInputExplicitOutPaddingConv.h"
 #include "UnrolledInputExplicitPaddingConv.h"
 #include "UnrolledInputImplicitInPaddingConv.h"
@@ -79,7 +79,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << time << ", ";
     }
 
-    // UnrolledInputConv_RIFFRO
+    // UnrolledInputConv_rIfFrO
     {
         auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         try
@@ -97,7 +97,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputConv_RIRFRO
+    // UnrolledInputConv_rIrFrO
     {
         auto properties = ConvProperties<RowMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         try
@@ -115,7 +115,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputConv_RIFFCO
+    // UnrolledInputConv_rIfFcO
     {
         auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, ChannelMajorOutput, UnrolledInput>{};
         try
@@ -133,7 +133,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputConv_RIRFCO
+    // UnrolledInputConv_rIrFcO
     {
         auto properties = ConvProperties<RowMajorFilters, RowMajorInput, ChannelMajorOutput, UnrolledInput>{};
         try
@@ -151,7 +151,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputConv_CIFFRO
+    // UnrolledInputConv_cIfFrO
     if(hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
@@ -174,7 +174,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // UnrolledInputConv_CIRFRO
+    // UnrolledInputConv_cIrFrO
     if(hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
@@ -197,7 +197,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // UnrolledInputConv_CIFFCO
+    // UnrolledInputConv_cIfFcO
     if(hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, ChannelMajorOutput, UnitHorizontalStride, UnrolledInput>{};
@@ -220,7 +220,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // UnrolledInputConv_CIRFCO
+    // UnrolledInputConv_cIrFcO
     if(hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, RowMajorFilters, ChannelMajorOutput, UnitHorizontalStride, UnrolledInput>{};
@@ -424,12 +424,14 @@ int main(int argc, char** argv)
     }
 
     std::cout << "ForLoopConv, ";
-    std::cout << "UnrolledInputConv_RIFFRO, ";
-    std::cout << "UnrolledInputConv_RIRFRO, ";
-    std::cout << "UnrolledInputConv_RIFFCO, ";
-    std::cout << "UnrolledInputConv_RIRFCO, ";
-    std::cout << "UnrolledInputConv_CIFF, ";
-    std::cout << "UnrolledInputConv_CIRF, ";
+    std::cout << "UnrolledInputConv_rIfFrO, ";
+    std::cout << "UnrolledInputConv_rIrFrO, ";
+    std::cout << "UnrolledInputConv_rIfFcO, ";
+    std::cout << "UnrolledInputConv_rIrFcO, ";
+    std::cout << "UnrolledInputConv_cIfFrO, ";
+    std::cout << "UnrolledInputConv_cIrFrO, ";
+    std::cout << "UnrolledInputConv_cIfFcO, ";
+    std::cout << "UnrolledInputConv_cIrFcO, ";
     std::cout << "UnrolledOutputConv, ";
     std::cout << "UnrolledInputImplicitInPaddingConv, ";
     std::cout << "UnrolledInputExplicitOutPaddingConv, ";
