@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "BlasHelpers.h"
-#include "ConvolutionProperties.h"
+#include "ConvProperties.h"
 #include "CSVParser.h"
 #include "ForLoopConvolution.h"
 #include "PartiallyUnrolledInputExplicitOutPaddingConvolution.h"
@@ -20,7 +20,7 @@
 #include "Tensor.h"
 #include "TestHelpers.h"
 #include "UnrolledInputChlMajInputConvolution.h"
-#include "UnrolledInputConvolution.h"
+#include "UnrolledInputRowMajInputConvolution.h"
 #include "UnrolledInputExplicitOutPaddingConvolution.h"
 #include "UnrolledInputExplicitPaddingConvolution.h"
 #include "UnrolledInputImplicitInPaddingConvolution.h"
@@ -71,7 +71,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
 
     // ForLoopConvolution
     {
-        auto properties = ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput>{};
+        auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput>{};
         auto time = GetMeanExecutionTime<float>(testDuration, XRowMajExp, [&](const float* X)
         {
             Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
@@ -79,9 +79,9 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << time << ", ";
     }
 
-    // UnrolledInputConvolution
+    // UnrolledInputRowMajInputFilMajFiltersConvolution
     {
-        auto properties = ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
+        auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         try
         {
             auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
@@ -97,10 +97,28 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputChlMajInputConvolution
+    // UnrolledInputRowMajInputRowMajFiltersConvolution
+    {
+        auto properties = ConvProperties<RowMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
+        try
+        {
+            auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
+            auto time = GetMeanExecutionTime<float>(testDuration, XRowMajExp, [&](const float* X)
+            {
+                Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << "mem, ";
+        }
+    }
+
+    // UnrolledInputChlMajInputFilMajFiltersConvolution
     if(hStride == 1)
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
+        auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
         try
         {
             auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
@@ -120,9 +138,32 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
+    // UnrolledInputChlMajInputRowMajFiltersConvolution
+    if(hStride == 1)
+    {
+        auto properties = ConvProperties<ChannelMajorInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
+        try
+        {
+            auto space = std::vector<float>(wRows * wCols * wChls * yRows * yCols);
+            auto time = GetMeanExecutionTime<float>(testDuration, XChlMajExp, [&](const float* X)
+            {
+                Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
+            });
+            std::cout << time << ", ";
+        }
+        catch(...)
+        {
+            std::cout << "mem, ";
+        }
+    }
+    else
+    {
+        std::cout << "n/a, ";
+    }
+
     // UnrolledOutputConvolution
     {
-        auto properties = ConvolutionProperties<ChannelMajorOutput, FilterMajorFilters, RowMajorInput, UnrolledOutput>{};
+        auto properties = ConvProperties<ChannelMajorOutput, FilterMajorFilters, RowMajorInput, UnrolledOutput>{};
         try
         {
             auto space = std::vector<float>(xRows * xCols * wCount * wRows * wCols);
@@ -141,7 +182,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     // UnrolledInputImplicitInPaddingConvolution
     if(wRows == 3 && wCols == 3 && vStride == 1 && hStride == 1)
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
+        auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
         try
         {
             auto space = std::vector<float>(9 * wChls * yRows * yCols);
@@ -164,7 +205,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     // UnrolledInputExplicitOutPaddingConvolution
     if(vStride == 1 && hStride == 1)
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
+        auto properties = ConvProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
         try
         {
             auto space = std::vector<float>((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
@@ -187,7 +228,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     // UnrolledInputExplicitPaddingConvolution
     if(vStride == 1 && hStride == 1)
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
+        auto properties = ConvProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
         try
         {
             auto space = std::vector<float>((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
@@ -210,7 +251,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     // PartiallyUnrolledInputImplicitInPaddingConvolution
     if(wRows == 3 && wCols == 3 && vStride == 1 && hStride == 1)
     {
-        auto properties = ConvolutionProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride>{};
+        auto properties = ConvProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride>{};
         try
         {
             auto space = std::vector<float>(yRows * yCols * wChls);
@@ -233,7 +274,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     // PartiallyUnrolledInputExplicitOutPaddingConvolution
     if(vStride == 1 && hStride == 1)
     {
-        auto properties = ConvolutionProperties<ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
+        auto properties = ConvProperties<ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
         auto time = GetMeanExecutionTime<float>(testDuration, XRowMajExp, [&](const float* X)
         {
             Convolution(properties, WRowMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols);
@@ -248,7 +289,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     // PartiallyUnrolledInputExplicitPaddingConvolution
     if(vStride == 1 && hStride == 1)
     {
-        auto properties = ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
+        auto properties = ConvProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
         auto time = GetMeanExecutionTime<float>(testDuration, XRowMajExp, [&](const float* X)
         {
             Convolution(properties, WRowMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft);
@@ -301,8 +342,10 @@ int main(int argc, char** argv)
     }
 
     std::cout << "ForLoopConvolution, ";
-    std::cout << "UnrolledInputConvolution, ";
-    std::cout << "UnrolledInputChlMajInputConvolution, ";
+    std::cout << "UnrolledInputRowMajInputFilMajFiltersConvolution, ";
+    std::cout << "UnrolledInputRowMajInputRowMajFiltersConvolution, ";
+    std::cout << "UnrolledInputChlMajInputFilMajFiltersConvolution, ";
+    std::cout << "UnrolledInputChlMajInputRowMajFiltersConvolution, ";
     std::cout << "UnrolledOutputConvolution, ";
     std::cout << "UnrolledInputImplicitInPaddingConvolution, ";
     std::cout << "UnrolledInputExplicitOutPaddingConvolution, ";

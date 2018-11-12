@@ -8,7 +8,7 @@
 #pragma once 
 
 #include "BlasHelpers.h"
-#include "ConvolutionProperties.h"
+#include "ConvProperties.h"
 #include "Tensor.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32,7 +32,7 @@
 // yCols: number of columns in the output tensor Y
 // space: pointer to temporary space of size at least ((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls)
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput,  UnitHorizontalStride, UnitVerticalStride, UnrolledInput>, 
+void Convolution(ConvProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput,  UnitHorizontalStride, UnitVerticalStride, UnrolledInput>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 

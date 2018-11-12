@@ -8,7 +8,7 @@
 #pragma once 
 
 #include "BlasHelpers.h"
-#include "ConvolutionProperties.h"
+#include "ConvProperties.h"
 #include "Tensor.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@
 // xPadLeft: number of input padding columns on the left and right
 // space: pointer to temporary space of size at least ((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls)
 template <typename ElementType>
-void Convolution(ConvolutionProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>, 
+void Convolution(ConvProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 

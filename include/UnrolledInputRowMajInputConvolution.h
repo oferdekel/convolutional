@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //  Project:  convolutional
-//  File:     UnrolledInputChlMajInputConvolution.h
+//  File:     UnrolledInputConvolution.h
 //  Authors:  Ofer Dekel
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13,37 +13,37 @@
 
 // Helper function that unrolls a channel-major input tensor into an unrolled input matrix
 template <typename ElementType>
-void ChlMajInputUnroll(const ElementType* X, 
+void RowMajInputUnroll(const ElementType* X, 
     ElementType* U,
-    int wRows,
-    int wCols,
-    int wChls,
+    int wRows, 
+    int wCols, 
+    int wChls, 
     int vStride, 
+    int hStride, 
     int yRows, 
     int yCols)
 {
-    int copySize = yCols;
-    int xRows = (yRows - 1) * vStride + wRows;
-    int xCols = yCols + wCols - 1;
-    
-    for(int wRow = 0; wRow < wRows; ++wRow) {
-        for(int wCol = 0; wCol < wCols; ++wCol) {
-            for(int wChl = 0; wChl < wChls; ++wChl) {
-                for(int yRow = 0; yRow < yRows; ++yRow) {
+    int xCols = (yCols - 1) * hStride + wCols;
+    int xChls = wChls;
+    int copySize = wCols * wChls;
 
-                    // calculate copy source
-                    int xRow = yRow * vStride + wRow;
-                    int xCol = wCol;
-                    int xChl = wChl;
-                    const float* source = X + (xChl * xRows + xRow) * xCols + xCol;
-                    
-                    // calculate copy target
-                    int uCol =  (wRow * wCols + wCol) * wChls + wChl;
-                    ElementType* target = U + (uCol * yRows + yRow) * yCols;
+    for(int yRow = 0; yRow < yRows; ++yRow) 
+    {
+        for(int yCol = 0; yCol < yCols; ++yCol) 
+        {
+            for(int wRow = 0; wRow < wRows; ++wRow) 
+            {
+                // calculate copy source
+                int xRow = yRow * vStride + wRow;
+                int xCol = yCol * hStride;
+                const float* source = X + (xRow * xCols + xCol) * xChls;
 
-                    // copy from X to U
-                    std::copy(source, source + copySize, target);
-                }   
+                // calculate copy target
+                int uRow = yRow * yCols + yCol;
+                float* target = U + (uRow * wRows + wRow) * copySize;
+
+                // copy from X to U
+                std::copy(source, source + copySize, target);
             }  
         }   
     }   
@@ -51,26 +51,26 @@ void ChlMajInputUnroll(const ElementType* X,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 2D Tensor Convolution
-// * supports only horizontal stride of 1
 // * unrolled input 
 // * filters in filter-major order
-// * input tensor in channel-major order
+// * input tensor in row-major order
 // * output tensor in row-major order
 // * requires temporary space of size (wRows * wCols * wChls * yRows * yCols)
 //
 // W: 4-dimensional weights tensor in filter-major order
-// X: 3-dimensional input tensor in channel-major order
+// X: 3-dimensional input tensor in row-major order
 // Y: 3-dimensional output tensor in row-major order
 // wCount: number of filters in W
 // wRows: number of rows in each filter in W
 // wCols: number of columns in each filter in W
 // wChls: number of channels in each filter in W
 // vStride: vertical stride
+// hStride: horizontal stride
 // yRows: number of rows in the output tensor Y
 // yCols: number of columns in the output tensor Y
 // space: pointer to temporary space of size at least (wRows * wCols * wChls * yRows * yCols)
 template <typename ElementType>
-void Convolution(ConvProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>,
+void Convolution(ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>,
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -79,17 +79,18 @@ void Convolution(ConvProperties<ChannelMajorInput, FilterMajorFilters, RowMajorO
     int wCols, 
     int wChls, 
     int vStride, 
+    int hStride, 
     int yRows, 
     int yCols,
     ElementType* space)
 {
-    // use temp space to store the unrolled input matrix U in column-major order
+    // use temp space to store the unrolled input matrix U in row-major order
     int uRows = yRows * yCols;
     int uCols = wRows * wCols * wChls;
     ElementType* U = space;
 
-    // unroll the channel-major input
-    ChlMajInputUnroll(X, U, wRows, wCols, wChls, vStride, yRows, yCols);
+    // unroll the row-major input
+    RowMajInputUnroll(X, U, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
 
     // reshape the filters tensor W into a column-major matrix V
     int vCols = wCount;
@@ -99,31 +100,31 @@ void Convolution(ConvProperties<ChannelMajorInput, FilterMajorFilters, RowMajorO
     ElementType* Z = Y;
 
     // matrix-matrix multiply
-    Gemm(ColMaj, ColMaj, RowMaj, uRows, vCols, uCols, 1, U, V, 0, Z);
+    Gemm(RowMaj, ColMaj, RowMaj, uRows, vCols, uCols, 1, U, V, 0, Z);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 2D Tensor Convolution
-// * supports only horizontal stride of 1
 // * unrolled input 
 // * filters in row-major order
-// * input tensor in channel-major order
+// * input tensor in row-major order
 // * output tensor in row-major order
 // * requires temporary space of size (wRows * wCols * wChls * yRows * yCols)
 //
 // W: 4-dimensional weights tensor in row-major order
-// X: 3-dimensional input tensor in channel-major order
+// X: 3-dimensional input tensor in row-major order
 // Y: 3-dimensional output tensor in row-major order
 // wCount: number of filters in W
 // wRows: number of rows in each filter in W
 // wCols: number of columns in each filter in W
 // wChls: number of channels in each filter in W
 // vStride: vertical stride
+// hStride: horizontal stride
 // yRows: number of rows in the output tensor Y
 // yCols: number of columns in the output tensor Y
 // space: pointer to temporary space of size at least (wRows * wCols * wChls * yRows * yCols)
 template <typename ElementType>
-void Convolution(ConvProperties<ChannelMajorInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>,
+void Convolution(ConvProperties<RowMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>,
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
@@ -132,17 +133,18 @@ void Convolution(ConvProperties<ChannelMajorInput, RowMajorFilters, RowMajorOutp
     int wCols, 
     int wChls, 
     int vStride, 
+    int hStride, 
     int yRows, 
     int yCols,
     ElementType* space)
 {
-    // use temp space to store the unrolled input matrix U in column-major order
+    // use temp space to store the unrolled input matrix U in row-major order
     int uRows = yRows * yCols;
     int uCols = wRows * wCols * wChls;
     ElementType* U = space;
 
-    // unroll the channel-major input
-    ChlMajInputUnroll(X, U, wRows, wCols, wChls, vStride, yRows, yCols);
+    // unroll the row-major input
+    RowMajInputUnroll(X, U, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
 
     // reshape the filters tensor W into a row-major matrix V
     int vCols = wCount;
@@ -152,6 +154,5 @@ void Convolution(ConvProperties<ChannelMajorInput, RowMajorFilters, RowMajorOutp
     ElementType* Z = Y;
 
     // matrix-matrix multiply
-    Gemm(ColMaj, RowMaj, RowMaj, uRows, vCols, uCols, 1, U, V, 0, Z);
+    Gemm(RowMaj, RowMaj, RowMaj, uRows, vCols, uCols, 1, U, V, 0, Z);
 }
-

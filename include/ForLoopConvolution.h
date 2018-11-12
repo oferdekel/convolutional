@@ -8,7 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "ConvolutionProperties.h"
+#include "ConvProperties.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // 2D Tensor Convolution
@@ -31,7 +31,7 @@
 // yRows: number of rows in the output tensor Y
 // yCols: number of columns in the output tensor Y
 template <typename ElementType>
-void Convolution(ConvolutionProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput>,
+void Convolution(ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput>,
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 

@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //  Project:  convolutional
-//  File:     ConvolutionProperties.h
+//  File:     ConvProperties.h
 //  Authors:  Ofer Dekel
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29,4 +29,4 @@ struct UnrolledOutput{};        // output is unrolled
 
 // a convenient way of collecting an arbitrary number of properties in one type
 template<typename ... T>
-using ConvolutionProperties = std::tuple<T...>;
+using ConvProperties = std::tuple<T...>;
