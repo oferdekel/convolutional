@@ -13,18 +13,18 @@
 #include "BlasHelpers.h"
 #include "ConvProperties.h"
 #include "CSVParser.h"
-#include "ForLoopConvolution.h"
-#include "PartiallyUnrolledInputExplicitOutPaddingConvolution.h"
-#include "PartiallyUnrolledInputExplicitPaddingConvolution.h"
-#include "PartiallyUnrolledInputImplicitInPaddingConvolution.h"
+#include "ForLoopConv.h"
+#include "PartiallyUnrolledInputExplicitOutPaddingConv.h"
+#include "PartiallyUnrolledInputExplicitPaddingConv.h"
+#include "PartiallyUnrolledInputImplicitInPaddingConv.h"
 #include "Tensor.h"
 #include "TestHelpers.h"
-#include "UnrolledInputChlMajInputConvolution.h"
-#include "UnrolledInputRowMajInputConvolution.h"
-#include "UnrolledInputExplicitOutPaddingConvolution.h"
-#include "UnrolledInputExplicitPaddingConvolution.h"
-#include "UnrolledInputImplicitInPaddingConvolution.h"
-#include "UnrolledOutputConvolution.h"
+#include "UnrolledInputChlMajInputConv.h"
+#include "UnrolledInputRowMajInputConv.h"
+#include "UnrolledInputExplicitOutPaddingConv.h"
+#include "UnrolledInputExplicitPaddingConv.h"
+#include "UnrolledInputImplicitInPaddingConv.h"
+#include "UnrolledOutputConv.h"
 
 void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int vStride, int hStride)
 {
@@ -69,7 +69,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
     auto YChlMaj = Tensor<float,3>({ yRows, yCols, yChls }, ChlMaj3);
     auto YChlMajExp = Tensor<float,3>({ xRows, xCols, yChls }, ChlMaj3);
 
-    // ForLoopConvolution
+    // ForLoopConv
     {
         auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput>{};
         auto time = GetMeanExecutionTime<float>(testDuration, XRowMajExp, [&](const float* X)
@@ -79,7 +79,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << time << ", ";
     }
 
-    // UnrolledInputRowMajInputFilMajFiltersConvolution
+    // UnrolledInputRowMajInputFilMajFiltersConv
     {
         auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         try
@@ -97,7 +97,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputRowMajInputRowMajFiltersConvolution
+    // UnrolledInputRowMajInputRowMajFiltersConv
     {
         auto properties = ConvProperties<RowMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         try
@@ -115,7 +115,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputChlMajInputFilMajFiltersConvolution
+    // UnrolledInputChlMajInputFilMajFiltersConv
     if(hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
@@ -138,7 +138,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // UnrolledInputChlMajInputRowMajFiltersConvolution
+    // UnrolledInputChlMajInputRowMajFiltersConv
     if(hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
@@ -161,7 +161,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // UnrolledOutputConvolution
+    // UnrolledOutputConv
     {
         auto properties = ConvProperties<ChannelMajorOutput, FilterMajorFilters, RowMajorInput, UnrolledOutput>{};
         try
@@ -179,7 +179,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         }
     }
 
-    // UnrolledInputImplicitInPaddingConvolution
+    // UnrolledInputImplicitInPaddingConv
     if(wRows == 3 && wCols == 3 && vStride == 1 && hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
@@ -202,7 +202,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // UnrolledInputExplicitOutPaddingConvolution
+    // UnrolledInputExplicitOutPaddingConv
     if(vStride == 1 && hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
@@ -225,7 +225,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // UnrolledInputExplicitPaddingConvolution
+    // UnrolledInputExplicitPaddingConv
     if(vStride == 1 && hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
@@ -248,7 +248,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // PartiallyUnrolledInputImplicitInPaddingConvolution
+    // PartiallyUnrolledInputImplicitInPaddingConv
     if(wRows == 3 && wCols == 3 && vStride == 1 && hStride == 1)
     {
         auto properties = ConvProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride>{};
@@ -271,7 +271,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // PartiallyUnrolledInputExplicitOutPaddingConvolution
+    // PartiallyUnrolledInputExplicitOutPaddingConv
     if(vStride == 1 && hStride == 1)
     {
         auto properties = ConvProperties<ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
@@ -286,7 +286,7 @@ void RunBenchmark(double testDuration, int xCount, int wCount, int wRows, int wC
         std::cout << "n/a, ";
     }
 
-    // PartiallyUnrolledInputExplicitPaddingConvolution
+    // PartiallyUnrolledInputExplicitPaddingConv
     if(vStride == 1 && hStride == 1)
     {
         auto properties = ConvProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
@@ -341,18 +341,18 @@ int main(int argc, char** argv)
         std::cout << key << ", ";
     }
 
-    std::cout << "ForLoopConvolution, ";
-    std::cout << "UnrolledInputRowMajInputFilMajFiltersConvolution, ";
-    std::cout << "UnrolledInputRowMajInputRowMajFiltersConvolution, ";
-    std::cout << "UnrolledInputChlMajInputFilMajFiltersConvolution, ";
-    std::cout << "UnrolledInputChlMajInputRowMajFiltersConvolution, ";
-    std::cout << "UnrolledOutputConvolution, ";
-    std::cout << "UnrolledInputImplicitInPaddingConvolution, ";
-    std::cout << "UnrolledInputExplicitOutPaddingConvolution, ";
-    std::cout << "UnrolledInputExplicitPaddingConvolution, ";
-    std::cout << "PartiallyUnrolledInputImplicitInPaddingConvolution, ";
-    std::cout << "PartiallyUnrolledInputExplicitOutPaddingConvolution, ";
-    std::cout << "PartiallyUnrolledInputExplicitPaddingConvolution";
+    std::cout << "ForLoopConv, ";
+    std::cout << "UnrolledInputRowMajInputFilMajFiltersConv, ";
+    std::cout << "UnrolledInputRowMajInputRowMajFiltersConv, ";
+    std::cout << "UnrolledInputChlMajInputFilMajFiltersConv, ";
+    std::cout << "UnrolledInputChlMajInputRowMajFiltersConv, ";
+    std::cout << "UnrolledOutputConv, ";
+    std::cout << "UnrolledInputImplicitInPaddingConv, ";
+    std::cout << "UnrolledInputExplicitOutPaddingConv, ";
+    std::cout << "UnrolledInputExplicitPaddingConv, ";
+    std::cout << "PartiallyUnrolledInputImplicitInPaddingConv, ";
+    std::cout << "PartiallyUnrolledInputExplicitOutPaddingConv, ";
+    std::cout << "PartiallyUnrolledInputExplicitPaddingConv";
     std::cout << std::endl;
 
     // run benchmarks
