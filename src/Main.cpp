@@ -86,6 +86,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
     auto XChlMajImp = GetRandomTensors<float, 3>(xCount, engine, { yRows, yCols, xChls }, ChlMaj3);
 
     // allocate output tensors
+    auto YRef = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3);
     auto YRowMaj = Tensor<float,3>({ yRows, yCols, yChls }, RowMaj3);
     auto YRowMajExp = Tensor<float,3>({ xRows, xCols, yChls }, RowMaj3);
     auto YChlMaj = Tensor<float,3>({ yRows, yCols, yChls }, ChlMaj3);
@@ -98,9 +99,8 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
     PrintBenchmark(true, testDuration, XRowMajExp, [&](const float* X)
     {
         auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput>{};
-        Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
+        Convolution(properties, WFilMaj.Data(), X, YRef.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols);
     });
-
     std::cout << ", ";
 
     // UnrolledInputConv_rIrFrO
@@ -110,7 +110,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<RowMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
     });
-
+    assert(YRowMaj == YRef);
     std::cout << ", ";
 
     // UnrolledInputConv_rIrFcO
@@ -120,7 +120,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<RowMajorFilters, RowMajorInput, ChannelMajorOutput, UnrolledInput>{};
         Convolution(properties, WRowMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
     });
-
+    assert(YChlMaj == YRef);
     std::cout << ", ";
 
     // UnrolledInputConv_rIfFrO
@@ -130,7 +130,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
     });
-
+    assert(YRowMaj == YRef);
     std::cout << ", ";
 
     // UnrolledInputConv_rIfFcO
@@ -140,47 +140,47 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, ChannelMajorOutput, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
     });
-
+    assert(YChlMaj == YRef);
     std::cout << ", ";
 
     // UnrolledInputConv_cIrFrO
     space.resize(wRows * wCols * wChls * yRows * yCols);
-    PrintBenchmark(hStride == 1, testDuration, XRowMajExp, [&](const float* X)
+    PrintBenchmark(hStride == 1, testDuration, XChlMajExp, [&](const float* X)
     {
         auto properties = ConvProperties<ChannelMajorInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
     });
-
+    assert(YRowMaj == YRef);
     std::cout << ", ";
 
     // UnrolledInputConv_cIrFcO
     space.resize(wRows * wCols * wChls * yRows * yCols);
-    PrintBenchmark(hStride == 1, testDuration, XRowMajExp, [&](const float* X)
+    PrintBenchmark(hStride == 1, testDuration, XChlMajExp, [&](const float* X)
     {
         auto properties = ConvProperties<ChannelMajorInput, RowMajorFilters, ChannelMajorOutput, UnitHorizontalStride, UnrolledInput>{};
         Convolution(properties, WRowMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
     });
-
+    assert(YChlMaj == YRef);
     std::cout << ", ";
 
     // UnrolledInputConv_cIfFrO
     space.resize(wRows * wCols * wChls * yRows * yCols);
-    PrintBenchmark(hStride == 1, testDuration, XRowMajExp, [&](const float* X)
+    PrintBenchmark(hStride == 1, testDuration, XChlMajExp, [&](const float* X)
     {
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
     });
-
+    assert(YRowMaj == YRef);
     std::cout << ", ";
 
     // UnrolledInputConv_cIfFcO
     space.resize(wRows * wCols * wChls * yRows * yCols);
-    PrintBenchmark(hStride == 1, testDuration, XRowMajExp, [&](const float* X)
+    PrintBenchmark(hStride == 1, testDuration, XChlMajExp, [&](const float* X)
     {
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, ChannelMajorOutput, UnitHorizontalStride, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
     });
-
+    assert(YChlMaj == YRef);
     std::cout << ", ";
 
     // UnrolledOutputConv
@@ -190,53 +190,47 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ChannelMajorOutput, FilterMajorFilters, RowMajorInput, UnrolledOutput>{};
         Convolution(properties, WFilMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
     });
-
+    assert(YChlMaj == YRef);
     std::cout << ", ";
 
     // UnrolledInputImplicitInPaddingConv
     space.resize(9 * wChls * yRows * yCols);
-    PrintBenchmark(wRows == 3 && wCols == 3 && vStride == 1 && hStride == 1, testDuration, XRowMajExp, [&](const float* X)
+    PrintBenchmark(wRows == 3 && wCols == 3 && vStride == 1 && hStride == 1, testDuration, XChlMajImp, [&](const float* X)
     {
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
     });
-
+    assert(YRowMaj == YRef);
     std::cout << ", ";
 
     // UnrolledInputExplicitOutPaddingConv
     space.resize((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
-    PrintBenchmark(vStride == 1 && hStride == 1, testDuration, XRowMajExp, [&](const float* X)
+    PrintBenchmark(vStride == 1 && hStride == 1, testDuration, XChlMajExp, [&](const float* X)
     {
         auto properties = ConvProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, space.data());
     });
- 
-    std::cout << std::endl;
-    std::cout << YRowMaj;
-    std::cout << std::endl;
+    assert(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()) == YRef);
+    std::cout << ", ";
 
-    std::cout << std::endl;
-    std::cout << YRowMajExp.GetSubTensor({1,1,0}, YRowMaj.Shape());
-    std::cout << std::endl;
-
-   // UnrolledInputExplicitPaddingConv
+    // UnrolledInputExplicitPaddingConv
     space.resize((yRows * yCols + (yRows - 1) * (wCols - 1)) * wRows * wCols * wChls);
-    PrintBenchmark(vStride == 1 && hStride == 1, testDuration, XRowMajExp, [&](const float* X)
+    PrintBenchmark(vStride == 1 && hStride == 1, testDuration, XChlMajExp, [&](const float* X)
     {
         auto properties = ConvProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft, space.data());
     });
-
+    assert(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()) == YRef);
     std::cout << ", ";
 
     // PartiallyUnrolledInputImplicitInPaddingConv
     space.resize(yRows * yCols * wChls);
-    PrintBenchmark(wRows == 3 && wCols == 3 && vStride == 1 && hStride == 1, testDuration, XRowMajExp, [&](const float* X)
+    PrintBenchmark(wRows == 3 && wCols == 3 && vStride == 1 && hStride == 1, testDuration, XRowMajImp, [&](const float* X)
     {
         auto properties = ConvProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
     });
-
+    assert(YRowMaj == YRef);
     std::cout << ", ";
 
     // PartiallyUnrolledInputExplicitOutPaddingConv
@@ -245,16 +239,16 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols);
     });
-
+    assert(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()) == YRef);
     std::cout << ", ";
 
     // PartiallyUnrolledInputExplicitPaddingConv
     PrintBenchmark(vStride == 1 && hStride == 1, testDuration, XRowMajExp, [&](const float* X)
     {
-        auto properties = ConvProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
+        auto properties = ConvProperties<RowMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft);
     });
-
+    assert(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()) == YRef);
     std::cout << std::endl;
 }
 
@@ -292,8 +286,8 @@ void ProcessBenchmarksFile(CSVParser<int>& parser)
     std::cout << std::endl;
 
     // run benchmarks
-    double testDuration = 200;
-    int xCount = 1;
+    double testDuration = 5000;
+    int xCount = 10;
 
     try
     {

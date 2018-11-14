@@ -283,16 +283,16 @@ bool TensorConstInterface<ElementType, degree>::operator==(const TensorConstInte
 {
     auto elementComparer = [](ElementType a, ElementType b)
     {
-        ElementType epsilon = 1.0e-5;
+        ElementType epsilon = (ElementType)1.0e-5;
         return (a - b < epsilon) && (b - a < epsilon);
     };
 
-    if (!std::equal(_shape.begin(), _shape.end(), other.Shape().begin))
+    if (!std::equal(_shape.begin(), _shape.end(), other.Shape().begin()))
     {
         return false;
     }
 
-    IntTuple<degree> index;
+    IntTuple<degree> index = {};
     do
     {
         if ((*this)(index) != other(index))

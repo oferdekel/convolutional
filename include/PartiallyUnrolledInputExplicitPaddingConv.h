@@ -22,7 +22,7 @@
 // * requires no temporary space 
 //
 // W: 4-dimensional weights tensor in row-major order
-// X: 3-dimensional input tensor in channel-major order
+// X: 3-dimensional input tensor in row-major order
 // Y: 3-dimensional output tensor in row-major order
 // wCount: number of filters in W
 // wRows: number of rows in each filter in W
@@ -33,7 +33,7 @@
 // xPadTop: the number of implicit zero-padding rows at the top of the input
 // xPadLeft: the number of implicit zero-padding columns at the left of the input
 template <typename ElementType>
-void Convolution(ConvProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>, 
+void Convolution(ConvProperties<RowMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
