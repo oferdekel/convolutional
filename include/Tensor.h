@@ -8,15 +8,14 @@
 #pragma once
 
 #include <algorithm>
-#include <cassert>
-#include <iostream>
-#include <random>
-#include <vector>
 #include <array>
-#include <string>
+#include <cassert>
 #include <initializer_list>
 #include <iomanip>
-#include <cmath>
+#include <iostream>
+#include <random>
+#include <string>
+#include <vector>
 
 // convenient type used to store integer tuples
 template <int size>
@@ -65,18 +64,8 @@ public:
     bool operator==(const TensorConstInterface<ElementType, degree>& other) const;
     bool operator!=(const TensorConstInterface<ElementType, degree>& other) const;
 
-// TODO
-    TensorConstInterface GetSubTensor(IntTuple<degree> firstElement, IntTuple<degree> shape)
-    {
-        int index = 0;
-        for(int i = 0; i < degree; ++i)
-        {
-            index += firstElement[i] * _increments[i];
-        }
-        ElementType* first = _pData + index;
-
-        return TensorConstInterface(first, shape, _order, _increments);
-    }
+    // returns a reference to a subtensor
+    TensorConstInterface GetSubTensor(IntTuple<degree> firstElement, IntTuple<degree> shape);
 
     // Returns a pointer to the underlying contiguous data
     const ElementType* Data() const { return _pData; }
@@ -309,6 +298,19 @@ template <typename ElementType, int degree>
 bool TensorConstInterface<ElementType, degree>::operator!=(const TensorConstInterface<ElementType, degree>& other) const
 {
     return !(*this == other);
+}
+
+template <typename ElementType, int degree>
+TensorConstInterface<ElementType, degree> TensorConstInterface<ElementType, degree>::GetSubTensor(IntTuple<degree> firstElement, IntTuple<degree> shape)
+{
+    int index = 0;
+    for(int i = 0; i < degree; ++i)
+    {
+        index += firstElement[i] * _increments[i];
+    }
+    ElementType* first = _pData + index;
+
+    return TensorConstInterface(first, shape, _order, _increments);
 }
 
 template <typename ElementType, int degree>
