@@ -15,6 +15,8 @@
 #include <array>
 #include <string>
 #include <initializer_list>
+#include <iomanip>
+#include <cmath>
 
 // convenient type used to store integer tuples
 template <int size>
@@ -53,12 +55,28 @@ public:
     // gets the minor to major order, e.g., MinorToMajor(0) returns the index of the minor dimension
     IntTuple<degree> Order() const { return _order; }
 
+    // gets the shape of the tensor
+    IntTuple<degree> Shape() const { return _shape; }
+
     // gets a reference to a tensor element
     const ElementType& operator()(IntTuple<degree> coordinate) const;
 
     // equality operator
     bool operator==(const TensorConstInterface<ElementType, degree>& other) const;
     bool operator!=(const TensorConstInterface<ElementType, degree>& other) const;
+
+// TODO
+    TensorConstInterface GetSubTensor(IntTuple<degree> firstElement, IntTuple<degree> shape)
+    {
+        int index = 0;
+        for(int i = 0; i < degree; ++i)
+        {
+            index += firstElement[i] * _increments[i];
+        }
+        ElementType* first = _pData + index;
+
+        return TensorConstInterface(first, shape, _order, _increments);
+    }
 
     // Returns a pointer to the underlying contiguous data
     const ElementType* Data() const { return _pData; }
@@ -84,6 +102,9 @@ protected:
 
     // calculates the increments from the shape and the order of the dimensions
     static IntTuple<degree> GetIncrements(IntTuple<degree> shape, IntTuple<degree> order);
+
+    //  private ctor
+    TensorConstInterface(const ElementType* pData, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> increments);
 };
 
 // Streaming operator. Streams the tensor elements in logical order (row major)
@@ -297,9 +318,6 @@ void TensorConstInterface<ElementType, degree>::Print(std::ostream& stream) cons
     Print(stream, 0, index);
 }
 
-#include <iomanip> // TODO
-#include <cmath>
-
 template <typename ElementType, int degree>
 void TensorConstInterface<ElementType, degree>::Print(std::ostream& stream, int dimension, IntTuple<degree>& index) const
 {
@@ -360,7 +378,7 @@ bool TensorConstInterface<ElementType, degree>::Next(IntTuple<degree>& index) co
 
         index[i] = 0;
     }
-    return false;    
+    return false;
 }
 
 template <typename ElementType, int degree>
@@ -408,6 +426,11 @@ IntTuple<degree> TensorConstInterface<ElementType, degree>::GetIncrements(IntTup
     }
     return increments;
 }
+
+template <typename ElementType, int degree>
+TensorConstInterface<ElementType, degree>::TensorConstInterface(const ElementType* pData, IntTuple<degree> shape, IntTuple<degree> order, IntTuple<degree> increments) :
+    _shape(shape), _increments(increments), _order(order), _pData(const_cast<ElementType*>(pData))
+{}
 
 template <typename ElementType, int degree>
 std::ostream& operator<<(std::ostream& stream, const TensorConstInterface<ElementType, degree>& tensor)

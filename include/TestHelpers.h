@@ -17,14 +17,14 @@ using BenchmarkType = std::function<void(const ElementType* X)>;
 
 // Executes the benchmark multiple times and measures mean execution time
 template <typename ElementType, typename TensorType>
-double GetMeanExecutionTime(double testDuration, const std::vector<TensorType>& inputs, BenchmarkType<ElementType> benchmark);
+double GetMeanExecutionTime(double testDuration, const std::vector<TensorType>& inputs, const BenchmarkType<ElementType>& benchmark);
 
 //
 //
 //
 
 template <typename ElementType, typename TensorType>
-double GetMeanExecutionTime(double testDuration, const std::vector<TensorType>& inputs, BenchmarkType<ElementType> benchmark)
+double GetMeanExecutionTime(double testDuration, const std::vector<TensorType>& inputs, const BenchmarkType<ElementType>& benchmark)
 {
     // warm up the caches
     for(const auto& input : inputs)
