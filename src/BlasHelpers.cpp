@@ -16,11 +16,18 @@
 
 void Gemm(MatrixOrder matrixOrderC, bool transposeA, bool transposeB, int m, int n, int k, float alpha, const float* A, int lda, const float* B, int ldb, float beta, float* C, int ldc)
 {
-    CBLAS_ORDER blasOrder = (matrixOrderC == RowMaj) ? CBLAS_ORDER::CblasRowMajor : CBLAS_ORDER::CblasColMajor;
-    CBLAS_TRANSPOSE blasTransposeA = transposeA ? CBLAS_TRANSPOSE::CblasTrans : CBLAS_TRANSPOSE::CblasNoTrans;
-    CBLAS_TRANSPOSE blasTransposeB = transposeB ? CBLAS_TRANSPOSE::CblasTrans : CBLAS_TRANSPOSE::CblasNoTrans;
+    if(matrixOrderC == RowMaj && transposeA && !transposeB)
+    {
+        // special case
+    }
+    else
+    {
+        CBLAS_ORDER blasOrder = (matrixOrderC == RowMaj) ? CBLAS_ORDER::CblasRowMajor : CBLAS_ORDER::CblasColMajor;
+        CBLAS_TRANSPOSE blasTransposeA = transposeA ? CBLAS_TRANSPOSE::CblasTrans : CBLAS_TRANSPOSE::CblasNoTrans;
+        CBLAS_TRANSPOSE blasTransposeB = transposeB ? CBLAS_TRANSPOSE::CblasTrans : CBLAS_TRANSPOSE::CblasNoTrans;
 
-    cblas_sgemm(blasOrder, blasTransposeA, blasTransposeB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+        cblas_sgemm(blasOrder, blasTransposeA, blasTransposeB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
+    }
 }
 
 void Axpy(int n, float alpha, const float* X, int incX, float* Y, int incY)
@@ -43,9 +50,6 @@ void Gemm(MatrixOrder matrixOrderC, bool transposeA, bool transposeB, int m, int
     auto AMat = MatrixConstInterface<float>(A, { m, k }, matrixOrderA); 
     auto BMat = MatrixConstInterface<float>(B, { k, n }, matrixOrderB);
     auto CMat = MatrixInterface<float>(C, { m, n }, matrixOrderC);
-
-    //  std::cout << AMat << std::endl << std::endl;
-    //  std::cout << BMat << std::endl << std::endl;
     
     for (int i = 0; i < CMat.Size(0); ++i)
     {
@@ -59,7 +63,6 @@ void Gemm(MatrixOrder matrixOrderC, bool transposeA, bool transposeB, int m, int
             CMat({i, j}) = beta * CMat({i, j}) + alpha * value;
         }
     }
-//    std::cout << CMat << std::endl << std::endl;
 }
 
 void Axpy(int n, float alpha, const float* X, int incX, float* Y, int incY)
