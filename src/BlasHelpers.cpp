@@ -18,7 +18,10 @@ void Gemm(MatrixOrder matrixOrderC, bool transposeA, bool transposeB, int m, int
 {
     if(matrixOrderC == RowMaj && transposeA && !transposeB)
     {
-        // special case
+        // workaround for bug in OpenBLAS 3.4
+        // equivalent formulation for this line:
+        // cblas_sgemm(CBLAS_ORDER::CblasRowMajor, CBLAS_TRANSPOSE::CblasTrans, CBLAS_TRANSPOSE::CblasNoTrans, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);       
+        cblas_sgemm(CBLAS_ORDER::CblasColMajor, CBLAS_TRANSPOSE::CblasNoTrans, CBLAS_TRANSPOSE::CblasTrans, n, m, k, alpha, B, ldb, A, lda, beta, C, ldc);
     }
     else
     {

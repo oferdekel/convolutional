@@ -50,6 +50,9 @@ void PrintBenchmark(bool condition, double testDuration, const std::vector<Tenso
 
 void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, int wCols, int wChls, int yRows, int yCols, int vStride, int hStride)
 {
+    // comparison tolerance (only in Debug compile)
+    const double tolerance = 1.0e-3;
+
     // output shape
     int yChls = wCount;
 
@@ -110,7 +113,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<RowMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
     });
-    assert(YRowMaj == YRef);
+    assert(YRef.ApproxEquals(YRowMaj, tolerance));
     std::cout << ", ";
 
     // UnrolledInputConv_rIrFcO
@@ -120,7 +123,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<RowMajorFilters, RowMajorInput, ChannelMajorOutput, UnrolledInput>{};
         Convolution(properties, WRowMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
     });
-    assert(YChlMaj == YRef);
+    assert(YRef.ApproxEquals(YChlMaj, tolerance));
     std::cout << ", ";
 
     // UnrolledInputConv_rIfFrO
@@ -130,7 +133,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, RowMajorOutput, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
     });
-    assert(YRowMaj == YRef);
+    assert(YRef.ApproxEquals(YRowMaj, tolerance));
     std::cout << ", ";
 
     // UnrolledInputConv_rIfFcO
@@ -140,7 +143,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<FilterMajorFilters, RowMajorInput, ChannelMajorOutput, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
     });
-    assert(YChlMaj == YRef);
+    assert(YRef.ApproxEquals(YChlMaj, tolerance));
     std::cout << ", ";
 
     // UnrolledInputConv_cIrFrO
@@ -150,7 +153,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ChannelMajorInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
     });
-    assert(YRowMaj == YRef);
+    assert(YRef.ApproxEquals(YRowMaj, tolerance));
     std::cout << ", ";
 
     // UnrolledInputConv_cIrFcO
@@ -160,7 +163,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ChannelMajorInput, RowMajorFilters, ChannelMajorOutput, UnitHorizontalStride, UnrolledInput>{};
         Convolution(properties, WRowMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
     });
-    assert(YChlMaj == YRef);
+    assert(YRef.ApproxEquals(YChlMaj, tolerance));
     std::cout << ", ";
 
     // UnrolledInputConv_cIfFrO
@@ -170,7 +173,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, RowMajorOutput, UnitHorizontalStride, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
     });
-    assert(YRowMaj == YRef);
+    assert(YRef.ApproxEquals(YRowMaj, tolerance));
     std::cout << ", ";
 
     // UnrolledInputConv_cIfFcO
@@ -180,7 +183,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, ChannelMajorOutput, UnitHorizontalStride, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, yRows, yCols, space.data());
     });
-    assert(YChlMaj == YRef);
+    assert(YRef.ApproxEquals(YChlMaj, tolerance));
     std::cout << ", ";
 
     // UnrolledOutputConv
@@ -190,7 +193,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ChannelMajorOutput, FilterMajorFilters, RowMajorInput, UnrolledOutput>{};
         Convolution(properties, WFilMaj.Data(), X, YChlMaj.Data(), wCount, wRows, wCols, wChls, vStride, hStride, yRows, yCols, space.data());
     });
-    assert(YChlMaj == YRef);
+    assert(YRef.ApproxEquals(YChlMaj, tolerance));
     std::cout << ", ";
 
     // UnrolledInputImplicitInPaddingConv
@@ -200,7 +203,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ChannelMajorInput, FilterMajorFilters, ImplicitInputPadding, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
     });
-    assert(YRowMaj == YRef);
+    assert(YRef.ApproxEquals(YRowMaj, tolerance));
     std::cout << ", ";
 
     // UnrolledInputExplicitOutPaddingConv
@@ -210,7 +213,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ChannelMajorInput, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, space.data());
     });
-    assert(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()) == YRef);
+    assert(YRef.ApproxEquals(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()), tolerance));
     std::cout << ", ";
 
     // UnrolledInputExplicitPaddingConv
@@ -220,7 +223,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ChannelMajorInput, ExplicitInputPadding, ExplicitOutputPadding, FilterMajorFilters, OddField, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, UnrolledInput>{};
         Convolution(properties, WFilMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft, space.data());
     });
-    assert(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()) == YRef);
+    assert(YRef.ApproxEquals(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()), tolerance));
     std::cout << ", ";
 
     // PartiallyUnrolledInputImplicitInPaddingConv
@@ -230,7 +233,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
     });
-    assert(YRowMaj == YRef);
+    assert(YRef.ApproxEquals(YRowMaj, tolerance));
     std::cout << ", ";
 
     // PartiallyUnrolledInputExplicitOutPaddingConv
@@ -239,7 +242,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols);
     });
-    assert(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()) == YRef);
+    assert(YRef.ApproxEquals(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()), tolerance));
     std::cout << ", ";
 
     // PartiallyUnrolledInputExplicitPaddingConv
@@ -248,7 +251,7 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
         auto properties = ConvProperties<RowMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft);
     });
-    assert(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()) == YRef);
+    assert(YRef.ApproxEquals(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()), tolerance));
     std::cout << std::endl;
 }
 
@@ -286,7 +289,7 @@ void ProcessBenchmarksFile(CSVParser<int>& parser)
     std::cout << std::endl;
 
     // run benchmarks
-    double testDuration = 5000;
+    double testDuration = 1000;
     int xCount = 10;
 
     try

@@ -63,6 +63,7 @@ public:
     // equality operator
     bool operator==(const TensorConstInterface<ElementType, degree>& other) const;
     bool operator!=(const TensorConstInterface<ElementType, degree>& other) const;
+    bool ApproxEquals(const TensorConstInterface<ElementType, degree>& other, double tolerance = 1.0e-8) const;
 
     // returns a reference to a subtensor
     TensorConstInterface GetSubTensor(IntTuple<degree> firstElement, IntTuple<degree> shape);
@@ -268,14 +269,8 @@ const ElementType& TensorConstInterface<ElementType, degree>::operator()(IntTupl
 }
 
 template <typename ElementType, int degree>
-bool TensorConstInterface<ElementType, degree>::operator==(const TensorConstInterface<ElementType, degree>& other) const
+bool TensorConstInterface<ElementType, degree>::ApproxEquals(const TensorConstInterface<ElementType, degree>& other, double tolerance) const
 {
-    auto elementComparer = [](ElementType a, ElementType b)
-    {
-        ElementType epsilon = (ElementType)1.0e-5;
-        return (a - b < epsilon) && (b - a < epsilon);
-    };
-
     if (!std::equal(_shape.begin(), _shape.end(), other.Shape().begin()))
     {
         return false;
@@ -284,7 +279,8 @@ bool TensorConstInterface<ElementType, degree>::operator==(const TensorConstInte
     IntTuple<degree> index = {};
     do
     {
-        if ((*this)(index) != other(index))
+        auto diff = (*this)(index) - other(index);
+        if(diff > ElementType(tolerance) || -diff > ElementType(tolerance))
         {
             return false;
         }
@@ -292,6 +288,12 @@ bool TensorConstInterface<ElementType, degree>::operator==(const TensorConstInte
     while(Next(index));
 
     return true;
+}
+
+template <typename ElementType, int degree>
+bool TensorConstInterface<ElementType, degree>::operator==(const TensorConstInterface<ElementType, degree>& other) const
+{
+    return ApproxEquals(other, 0.0);
 }
 
 template <typename ElementType, int degree>
