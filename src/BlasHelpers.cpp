@@ -16,21 +16,11 @@
 
 void Gemm(MatrixOrder matrixOrderC, bool transposeA, bool transposeB, int m, int n, int k, float alpha, const float* A, int lda, const float* B, int ldb, float beta, float* C, int ldc)
 {
-    if(matrixOrderC == RowMaj && transposeA && !transposeB)
-    {
-        // workaround for bug in OpenBLAS 3.4
-        // equivalent formulation for this line:
-        // cblas_sgemm(CBLAS_ORDER::CblasRowMajor, CBLAS_TRANSPOSE::CblasTrans, CBLAS_TRANSPOSE::CblasNoTrans, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);       
-        cblas_sgemm(CBLAS_ORDER::CblasColMajor, CBLAS_TRANSPOSE::CblasNoTrans, CBLAS_TRANSPOSE::CblasTrans, n, m, k, alpha, B, ldb, A, lda, beta, C, ldc);
-    }
-    else
-    {
-        CBLAS_ORDER blasOrder = (matrixOrderC == RowMaj) ? CBLAS_ORDER::CblasRowMajor : CBLAS_ORDER::CblasColMajor;
-        CBLAS_TRANSPOSE blasTransposeA = transposeA ? CBLAS_TRANSPOSE::CblasTrans : CBLAS_TRANSPOSE::CblasNoTrans;
-        CBLAS_TRANSPOSE blasTransposeB = transposeB ? CBLAS_TRANSPOSE::CblasTrans : CBLAS_TRANSPOSE::CblasNoTrans;
+    CBLAS_ORDER blasOrder = (matrixOrderC == RowMaj) ? CBLAS_ORDER::CblasRowMajor : CBLAS_ORDER::CblasColMajor;
+    CBLAS_TRANSPOSE blasTransposeA = transposeA ? CBLAS_TRANSPOSE::CblasTrans : CBLAS_TRANSPOSE::CblasNoTrans;
+    CBLAS_TRANSPOSE blasTransposeB = transposeB ? CBLAS_TRANSPOSE::CblasTrans : CBLAS_TRANSPOSE::CblasNoTrans;
 
-        cblas_sgemm(blasOrder, blasTransposeA, blasTransposeB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
-    }
+    cblas_sgemm(blasOrder, blasTransposeA, blasTransposeB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 }
 
 void Axpy(int n, float alpha, const float* X, int incX, float* Y, int incY)
@@ -91,12 +81,14 @@ void PrintBlasInfo()
 
 #endif
 
+// Gemm with three order parameters instead of one order parameter and two transpose parameters
 void Gemm(MatrixOrder matrixOrderA, MatrixOrder matrixOrderB, MatrixOrder matrixOrderC, int m, int n, int k, float alpha, const float* A, int lda, const float* B, int ldb, float beta, float* C, int ldc)
 {
     Gemm(matrixOrderC, (matrixOrderA != matrixOrderC), (matrixOrderB != matrixOrderC), m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 }
 
-void Gemm(MatrixOrder matrixOrderA, MatrixOrder matrixOrderB, MatrixOrder matrixOrderC, int m, int n, int k, float alpha, const float* A, const float* B, float beta, float* C)
+// Gemm that automatically sets lda, ldb, ldc to their default values
+void GemmS(MatrixOrder matrixOrderA, MatrixOrder matrixOrderB, MatrixOrder matrixOrderC, int m, int n, int k, float alpha, const float* A, const float* B, float beta, float* C)
 {
     int lda = (matrixOrderA == RowMaj) ? k : m;
     int ldb = (matrixOrderB == RowMaj) ? n : k;
@@ -104,3 +96,12 @@ void Gemm(MatrixOrder matrixOrderA, MatrixOrder matrixOrderB, MatrixOrder matrix
     Gemm(matrixOrderA, matrixOrderB, matrixOrderC, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 }
 
+void GemmT(MatrixOrder matrixOrderA, MatrixOrder matrixOrderB, MatrixOrder matrixOrderC, int m, int n, int k, float alpha, const float* A, const float* B, float beta, float* C)
+{
+    GemmS(Transpose(matrixOrderB), Transpose(matrixOrderA), Transpose(matrixOrderC), n, m, k, alpha, B, A, beta, C);
+}
+
+void Gemm(MatrixOrder matrixOrderA, MatrixOrder matrixOrderB, MatrixOrder matrixOrderC, int m, int n, int k, float alpha, const float* A, const float* B, float beta, float* C)
+{
+    GemmT(matrixOrderA, matrixOrderB, matrixOrderC, m, n, k, alpha, A, B, beta, C);
+}

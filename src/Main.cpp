@@ -338,6 +338,10 @@ int main(int argc, char** argv)
         exit(0);
     }
 
+    #ifndef NDEBUG
+    std::cout << "Warning: DEBUG BUILD" << std::endl;
+    #endif 
+
     // create a parser for the benchmarks.csv file
     auto parser = CSVParser<int>(argv[1]);
 

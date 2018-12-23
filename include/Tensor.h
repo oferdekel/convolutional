@@ -164,6 +164,11 @@ using Matrix = Tensor<ElementType, 2>;
 
 using MatrixOrder = TensorOrder2;
 
+inline MatrixOrder Transpose(MatrixOrder order)
+{
+    return order == RowMaj ? ColMaj : RowMaj;
+}
+
 //
 // Matrix helper functions
 //
