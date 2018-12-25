@@ -96,12 +96,15 @@ void GemmS(MatrixOrder matrixOrderA, MatrixOrder matrixOrderB, MatrixOrder matri
     Gemm(matrixOrderA, matrixOrderB, matrixOrderC, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 }
 
+// Equivalent formulation of Gemm that uses the transposes of all matrices (Transp(C) = Transp(B) * Transp(A))
 void GemmT(MatrixOrder matrixOrderA, MatrixOrder matrixOrderB, MatrixOrder matrixOrderC, int m, int n, int k, float alpha, const float* A, const float* B, float beta, float* C)
 {
     GemmS(Transpose(matrixOrderB), Transpose(matrixOrderA), Transpose(matrixOrderC), n, m, k, alpha, B, A, beta, C);
 }
 
+// Gemm entry point, decides between GemmS and GemmT
 void Gemm(MatrixOrder matrixOrderA, MatrixOrder matrixOrderB, MatrixOrder matrixOrderC, int m, int n, int k, float alpha, const float* A, const float* B, float beta, float* C)
 {
+    //GemmS(matrixOrderA, matrixOrderB, matrixOrderC, m, n, k, alpha, A, B, beta, C);
     GemmT(matrixOrderA, matrixOrderB, matrixOrderC, m, n, k, alpha, A, B, beta, C);
 }
