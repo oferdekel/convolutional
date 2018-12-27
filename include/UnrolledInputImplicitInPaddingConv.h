@@ -40,6 +40,10 @@ void Convolution(ConvProperties<ChannelMajorInput, FilterMajorFilters, ImplicitI
     int yCols,
     ElementType* space)
 {
+    int xRows = yRows + 2;
+    int xCols = yCols + 2;
+    int xChls = wChls;
+
     // use temp space to store the unrolled input matrix U in column-major order
     int uRows = yRows * yCols;
     int uCols = 9 * wChls;
@@ -53,6 +57,10 @@ void Convolution(ConvProperties<ChannelMajorInput, FilterMajorFilters, ImplicitI
     {
         // copy input from X into U
         ElementType* ptr = U + position * blockSize + uOffset;
+        assert(xOffset >= 0);
+        assert(X + blockSize + xOffset <= X + xRows * xCols * xChls);
+        assert(ptr >= U);
+        assert(ptr + blockSize <= U + uRows * uCols);
         std::copy(X + xOffset, X + blockSize + xOffset + xSizeOffset, ptr);
         
         // structured delete of unneeded elements
@@ -65,6 +73,7 @@ void Convolution(ConvProperties<ChannelMajorInput, FilterMajorFilters, ImplicitI
 
         for(int j = 0; j < intervals; ++j)
         {
+            assert(ptr + size <= U + uRows * uCols);
             std::fill_n(ptr, size, (ElementType)0);
             ptr += size + skip - 1;
             for(int i = 0; i < singles; ++i)

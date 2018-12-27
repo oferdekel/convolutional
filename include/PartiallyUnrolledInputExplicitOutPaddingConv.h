@@ -45,11 +45,12 @@ void Convolution(ConvProperties<ExplicitOutputPadding, OddField, PartiallyUnroll
     int xCols = yCols + wCols - 1;
     int xChls = wChls;
 
+    int yChls = wCount;
     int yPadTop = (wRows - 1) / 2;
     int yPadLeft = (wCols - 1) / 2;
 
     // reshape the relevant part of the output tensor Y into a row-major matrix Z
-    ElementType* Z = Y + (xCols * yPadTop + yPadLeft) * wCount;
+    ElementType* Z = Y + (yPadLeft + xCols * yPadTop) * yChls;
 
     // define a helper function that handles a single spatial filter position (row, col)
     auto ProcessFilterPosition = [&](int wRow, int wCol, ElementType beta)
@@ -60,8 +61,9 @@ void Convolution(ConvProperties<ExplicitOutputPadding, OddField, PartiallyUnroll
         const ElementType* P = X + (wRow * xCols + wCol) * xChls;
 
         // reshape the relevant part of the filter tensor W into a row-major matrix V
+       int vRows = wChls;
        int vCols = wCount;
-       int vSize = wChls * wCount;
+       int vSize =  vRows * vCols;
        const ElementType* V = W + (wRow * wCols + wCol) * vSize;
 
         // perform the matrix-matrix multiplication
@@ -90,7 +92,9 @@ void Convolution(ConvProperties<ExplicitOutputPadding, OddField, PartiallyUnroll
     int deleteSize = (wCols - 1) * wCount;
     for(int yRow = 0; yRow < yRows - 1; ++yRow)
     {
-        ElementType* begin = Z + (yCols + xCols * yRow) * wCount;
+        ElementType* begin = Z + (yCols + xCols * yRow) * yChls;
+        assert(begin >= Y);
+        assert(begin + deleteSize <= Y + yRows * yCols * yChls);
         std::fill(begin, begin + deleteSize, (ElementType)0);
     }
 }

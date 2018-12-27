@@ -50,6 +50,7 @@ void Convolution(ConvProperties<ChannelMajorInput, ExplicitInputPadding, Explici
 {
     int xRows = yRows + wRows - 1;
     int xCols = yCols + wCols - 1;
+    int xChls = wChls;
 
     int yPadTop = (wRows - 1) / 2;
     int yPadLeft = (wCols - 1) / 2;
@@ -102,6 +103,10 @@ void Convolution(ConvProperties<ChannelMajorInput, ExplicitInputPadding, Explici
                 float* target = U + uCol * copySize;
 
                 // copy from X to U
+                assert(source + distToContent >= X);
+                assert(source + copySize - distFromContent <= X + xRows * xCols * xChls);
+                assert(target + distToContent >= U);
+                assert(target + copySize - distFromContent <= U + uRows * uCols);
                 std::copy(source + distToContent, source + copySize - distFromContent, target + distToContent);
             }
         }   

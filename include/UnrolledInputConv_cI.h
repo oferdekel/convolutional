@@ -20,12 +20,15 @@ void ChlMajInputUnroll(const ElementType* X,
     int wChls,
     int vStride, 
     int yRows, 
-    int yCols)
+    int yCols, 
+    int uRows,
+    int uCols)
 {
     int copySize = yCols;
     int xRows = (yRows - 1) * vStride + wRows;
     int xCols = yCols + wCols - 1;
-    
+    int xChls = wChls;
+
     for(int wRow = 0; wRow < wRows; ++wRow) {
         for(int wCol = 0; wCol < wCols; ++wCol) {
             for(int wChl = 0; wChl < wChls; ++wChl) {
@@ -42,6 +45,10 @@ void ChlMajInputUnroll(const ElementType* X,
                     ElementType* target = U + (uCol * yRows + yRow) * yCols;
 
                     // copy from X to U
+                    assert(source >= X);
+                    assert(source + copySize <= X + xRows * xCols * xChls);
+                    assert(target >= U);
+                    assert(target + copySize <= U + uRows * uCols);
                     std::copy(source, source + copySize, target);
                 }   
             }  
@@ -89,7 +96,7 @@ void Convolution(ConvProperties<ChannelMajorInput, FilterMajorFilters, RowMajorO
     ElementType* U = space;
 
     // unroll the channel-major input
-    ChlMajInputUnroll(X, U, wRows, wCols, wChls, vStride, yRows, yCols);
+    ChlMajInputUnroll(X, U, wRows, wCols, wChls, vStride, yRows, yCols, uRows, uCols);
 
     // reshape the filters tensor W into a column-major matrix V
     int vCols = wCount;
@@ -142,7 +149,7 @@ void Convolution(ConvProperties<ChannelMajorInput, RowMajorFilters, RowMajorOutp
     ElementType* U = space;
 
     // unroll the channel-major input
-    ChlMajInputUnroll(X, U, wRows, wCols, wChls, vStride, yRows, yCols);
+    ChlMajInputUnroll(X, U, wRows, wCols, wChls, vStride, yRows, yCols, uRows, uCols);
 
     // reshape the filters tensor W into a row-major matrix V
     int vCols = wCount;
@@ -195,7 +202,7 @@ void Convolution(ConvProperties<ChannelMajorInput, FilterMajorFilters, ChannelMa
     ElementType* U = space;
 
     // unroll the channel-major input
-    ChlMajInputUnroll(X, U, wRows, wCols, wChls, vStride, yRows, yCols);
+    ChlMajInputUnroll(X, U, wRows, wCols, wChls, vStride, yRows, yCols, uRows, uCols);
 
     // reshape the filters tensor W into a column-major matrix V
     int vCols = wCount;
@@ -248,7 +255,7 @@ void Convolution(ConvProperties<ChannelMajorInput, RowMajorFilters, ChannelMajor
     ElementType* U = space;
 
     // unroll the channel-major input
-    ChlMajInputUnroll(X, U, wRows, wCols, wChls, vStride, yRows, yCols);
+    ChlMajInputUnroll(X, U, wRows, wCols, wChls, vStride, yRows, yCols, uRows, uCols);
 
     // reshape the filters tensor W into a row-major matrix V
     int vCols = wCount;

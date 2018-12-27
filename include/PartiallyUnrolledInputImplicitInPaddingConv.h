@@ -83,11 +83,13 @@ void Convolution(ConvProperties<ImplicitInputPadding, PartiallyUnrolledInput, Ro
         // copy the relevant part of X into P
         const ElementType* source = X + (xRow * yCols + xCol) * wChls; 
         int copySize = pRows * pCols;
+        assert(source + copySize <= P + pRows * pCols);
         std::copy(source, source + copySize, P);
 
         // delete unwanted values from P
         for(int pRow = yCols - 1; pRow < pRows; pRow += yCols)
         {
+            assert(pRow + 1 <= pRows);
             std::fill_n(P + pRow * pCols, pCols, (ElementType)0);
         }
 

@@ -72,6 +72,10 @@ void Convolution(ConvProperties<ChannelMajorInput, ExplicitOutputPadding, Filter
                 float* target = U + uCol * copySize;
 
                 // copy from X to U
+                assert(source >= X);
+                assert(source + copySize <= X + xRows * xCols * xChls);
+                assert(target >= U);
+                assert(target + copySize <= U + uRows * uCols);
                 std::copy(source, source + copySize, target);
             }  
         }   
