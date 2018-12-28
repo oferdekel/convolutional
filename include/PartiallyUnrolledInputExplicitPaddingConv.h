@@ -103,7 +103,7 @@ void Convolution(ConvProperties<RowMajorInput, ExplicitInputPadding, ExplicitOut
     };
 
     // reset the output 
-    assert((yRows + wRows - 1) * (yCols + wCols - 1) <= yRows * yCols);
+    assert((yRows + wRows - 1) * (yCols + wCols - 1) <= xRows * xCols);
     std::fill_n(Y, (yRows + wRows - 1) * (yCols + wCols - 1) * yChls, (ElementType)0);
 
     // process the TOP LEFT filter position across all channels
@@ -130,7 +130,7 @@ void Convolution(ConvProperties<RowMajorInput, ExplicitInputPadding, ExplicitOut
     {
         ElementType* begin = Y + (xCols * (yRow + yPadTop) + (yCols + yPadLeft)) * wCount;
         assert(begin >= Y);
-        assert(begin + deleteSize <= Y + yRows * yCols * yChls);
+        assert(begin + deleteSize <= Y + xRows * xCols * yChls);
         std::fill_n(begin, deleteSize, (ElementType)0);
     }
 }

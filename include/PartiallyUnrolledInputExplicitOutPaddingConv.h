@@ -42,6 +42,7 @@ void Convolution(ConvProperties<ExplicitOutputPadding, OddField, PartiallyUnroll
     int yRows, 
     int yCols)
 {
+    int xRows = yRows + wRows - 1;
     int xCols = yCols + wCols - 1;
     int xChls = wChls;
 
@@ -89,12 +90,12 @@ void Convolution(ConvProperties<ExplicitOutputPadding, OddField, PartiallyUnroll
     }   
 
     // delete the values that were written into the output padding
-    int deleteSize = (wCols - 1) * wCount;
+    int deleteSize = 2 * yPadLeft * yChls;
     for(int yRow = 0; yRow < yRows - 1; ++yRow)
     {
         ElementType* begin = Z + (yCols + xCols * yRow) * yChls;
         assert(begin >= Y);
-        assert(begin + deleteSize <= Y + yRows * yCols * yChls);
+        assert(begin + deleteSize <= Y + xRows * xCols * yChls);
         std::fill(begin, begin + deleteSize, (ElementType)0);
     }
 }

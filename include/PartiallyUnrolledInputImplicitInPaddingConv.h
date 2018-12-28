@@ -44,6 +44,10 @@ void Convolution(ConvProperties<ImplicitInputPadding, PartiallyUnrolledInput, Ro
 {
     int yChls = wCount;
 
+    int xRows = yRows + 2;
+    int xCols = yCols + 2;
+    int xChls = wChls;
+
     int vCols = wCount;
     int vSize = wChls * wCount;
 
@@ -83,7 +87,7 @@ void Convolution(ConvProperties<ImplicitInputPadding, PartiallyUnrolledInput, Ro
         // copy the relevant part of X into P
         const ElementType* source = X + (xRow * yCols + xCol) * wChls; 
         int copySize = pRows * pCols;
-        assert(source + copySize <= P + pRows * pCols);
+        assert(source + copySize <= X + xRows * xCols * xChls);
         std::copy(source, source + copySize, P);
 
         // delete unwanted values from P
