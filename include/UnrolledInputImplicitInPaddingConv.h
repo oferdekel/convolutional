@@ -97,6 +97,8 @@ void Convolution(ConvProperties<ChannelMajorInput, FilterMajorFilters, ImplicitI
     ProcessFilterPosition(3, 0, -1, 1, yCols, yRows * wChls - 1, 0, 0);
 
     // unroll input block corresponding to MID CENTER filter elements across all channels
+    assert(blockSize <= xRows * xCols * xChls);
+    assert(5 * blockSize <= uRows * uCols);
     std::copy(X, X + blockSize, U + 4 * blockSize);
 
     // unroll input block corresponding to MID RIGHT filter elements across all channels
