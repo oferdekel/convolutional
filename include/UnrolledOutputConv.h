@@ -58,7 +58,6 @@ void Convolution(ConvProperties<ChannelMajorOutput, FilterMajorFilters, RowMajor
         for(int i=0; i < count-1; ++i)
         {
             Axpy(size, 1, begin + i * offset, increment, begin + (i + 1) * offset, increment);
-            //std::fill_n(begin + i * offset, size, (ElementType)0); // TODO remove
         }
     };
 

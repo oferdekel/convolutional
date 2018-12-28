@@ -44,6 +44,8 @@ void Convolution(ConvProperties<ChannelMajorInput, ExplicitOutputPadding, Filter
     int yCols, 
     ElementType* space)
 {
+    int yChls = wCount;
+
     int xRows = yRows + wRows - 1;
     int xCols = yCols + wCols - 1;
     int xChls = wChls;
@@ -96,6 +98,7 @@ void Convolution(ConvProperties<ChannelMajorInput, ExplicitOutputPadding, Filter
     for(int yRow = 0; yRow < yRows - 1; ++yRow)
     {
         ElementType* begin = Z + (yCols + xCols * yRow) * wCount;
-        std::fill(begin, begin + deleteSize, (ElementType)0);
+        assert(begin + deleteSize <= Y + xRows * xCols * yChls);
+        std::fill_n(begin, deleteSize, (ElementType)0);
     }
 }
