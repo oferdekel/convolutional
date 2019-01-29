@@ -9,9 +9,9 @@ set(include
     include/ConvProperties.h
     include/CSVParser.h
     include/ForLoopConv.h
-    include/PartiallyUnrolledInputExplicitOutPaddingConv.h
-    include/PartiallyUnrolledInputExplicitPaddingConv.h
-    include/PartiallyUnrolledInputImplicitInPaddingConv.h
+    include/VirtuallyUnrolledInputExplicitOutPaddingConv.h
+    include/VirtuallyUnrolledInputExplicitPaddingConv.h
+    include/VirtuallyUnrolledInputImplicitInPaddingConv.h
     include/Tensor.h
     include/TestHelpers.h
     include/UnrolledInputConv_cI.h

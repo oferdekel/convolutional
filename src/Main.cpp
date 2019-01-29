@@ -14,9 +14,9 @@
 #include "ConvProperties.h"
 #include "CSVParser.h"
 #include "ForLoopConv.h"
-#include "PartiallyUnrolledInputExplicitOutPaddingConv.h"
-#include "PartiallyUnrolledInputExplicitPaddingConv.h"
-#include "PartiallyUnrolledInputImplicitInPaddingConv.h"
+#include "VirtuallyUnrolledInputExplicitOutPaddingConv.h"
+#include "VirtuallyUnrolledInputExplicitPaddingConv.h"
+#include "VirtuallyUnrolledInputImplicitInPaddingConv.h"
 #include "Tensor.h"
 #include "TestHelpers.h"
 #include "UnrolledInputConv_cI.h"
@@ -226,29 +226,29 @@ void RunAllBenchmarks(double testDuration, int xCount, int wCount, int wRows, in
     assert(YRef.ApproxEquals(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()), tolerance));
     std::cout << ", ";
 
-    // PartiallyUnrolledInputImplicitInPaddingConv
+    // VirtuallyUnrolledInputImplicitInPaddingConv
     space.resize(yRows * yCols * wChls);
     PrintBenchmark(wRows == 3 && wCols == 3 && vStride == 1 && hStride == 1, testDuration, XRowMajImp, [&](const float* X)
     {
-        auto properties = ConvProperties<ImplicitInputPadding, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride>{};
+        auto properties = ConvProperties<ImplicitInputPadding, VirtuallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, ThreeByThreeField, UnitHorizontalStride, UnitVerticalStride>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMaj.Data(), wCount, wChls, yRows, yCols, space.data());
     });
     assert(YRef.ApproxEquals(YRowMaj, tolerance));
     std::cout << ", ";
 
-    // PartiallyUnrolledInputExplicitOutPaddingConv
+    // VirtuallyUnrolledInputExplicitOutPaddingConv
     PrintBenchmark(vStride == 1 && hStride == 1, testDuration, XRowMajExp, [&](const float* X)
     {
-        auto properties = ConvProperties<ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
+        auto properties = ConvProperties<ExplicitOutputPadding, OddField, VirtuallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols);
     });
     assert(YRef.ApproxEquals(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()), tolerance));
     std::cout << ", ";
 
-    // PartiallyUnrolledInputExplicitPaddingConv
+    // VirtuallyUnrolledInputExplicitPaddingConv
     PrintBenchmark(vStride == 1 && hStride == 1, testDuration, XRowMajExp, [&](const float* X)
     {
-        auto properties = ConvProperties<RowMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
+        auto properties = ConvProperties<RowMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, VirtuallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>{};
         Convolution(properties, WRowMaj.Data(), X, YRowMajExp.Data(), wCount, wRows, wCols, wChls, yRows, yCols, xPadTop, xPadLeft);
     });
     assert(YRef.ApproxEquals(YRowMajExp.GetSubTensor({1,1,0}, YRef.Shape()), tolerance));
@@ -283,9 +283,9 @@ void ProcessBenchmarksFile(CSVParser<int>& parser)
     std::cout << "UnrolledInputImplicitInPaddingConv, ";
     std::cout << "UnrolledInputExplicitOutPaddingConv, ";
     std::cout << "UnrolledInputExplicitPaddingConv, ";
-    std::cout << "PartiallyUnrolledInputImplicitInPaddingConv, ";
-    std::cout << "PartiallyUnrolledInputExplicitOutPaddingConv, ";
-    std::cout << "PartiallyUnrolledInputExplicitPaddingConv";
+    std::cout << "VirtuallyUnrolledInputImplicitInPaddingConv, ";
+    std::cout << "VirtuallyUnrolledInputExplicitOutPaddingConv, ";
+    std::cout << "VirtuallyUnrolledInputExplicitPaddingConv";
     std::cout << std::endl;
 
     // run benchmarks
