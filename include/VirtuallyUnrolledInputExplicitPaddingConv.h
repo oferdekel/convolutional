@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //  Project:  convolutional
-//  File:     PartiallyUnrolledInputExplicitPaddingConvolution.h
+//  File:     VirtuallyUnrolledInputExplicitPaddingConvolution.h
 //  Authors:  Ofer Dekel
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,7 +33,7 @@
 // xPadTop: the number of implicit zero-padding rows at the top of the input
 // xPadLeft: the number of implicit zero-padding columns at the left of the input
 template <typename ElementType>
-void Convolution(ConvProperties<RowMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, PartiallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>, 
+void Convolution(ConvProperties<RowMajorInput, ExplicitInputPadding, ExplicitOutputPadding, OddField, VirtuallyUnrolledInput, RowMajorFilters, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
