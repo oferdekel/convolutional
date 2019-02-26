@@ -17,7 +17,7 @@ struct ExplicitOutputPadding{}; // output tensor includes explicit zero-padding
 struct FilterMajorFilters{};    // filter tensor is given in filter, row, column, channel major-to-minor order
 struct ImplicitInputPadding{};  // input should be processed with implicit zero-padding
 struct OddField{};              // odd receptive field size - number of filter rows must be odd, number of filter columns must be odd
-struct VirtuallyUnrolledInput{};// input is virtually unrolled piece by piece
+struct PartiallyUnrolledInput{};// input is partially unrolled piece by piece
 struct RowMajorFilters{};       // filter tensor is given in row, column, channel, filter major-to-minor order
 struct RowMajorInput{};         // input is provided in row major tensor order
 struct RowMajorOutput{};        // output is provided in row major tensor order
@@ -26,6 +26,7 @@ struct UnitHorizontalStride{};  // horizontal stride must equal 1
 struct UnitVerticalStride{};    // vertical stride must equal 1
 struct UnrolledInput{};         // input is unrolled 
 struct UnrolledOutput{};        // output is unrolled
+struct VirtuallyUnrolledInput{};// input is virtually unrolled piece by piece
 
 // a convenient way of collecting an arbitrary number of properties in one type
 template<typename ... T>

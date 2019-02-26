@@ -9,9 +9,7 @@ set(include
     include/ConvProperties.h
     include/CSVParser.h
     include/ForLoopConv.h
-    include/VirtuallyUnrolledInputExplicitOutPaddingConv.h
-    include/VirtuallyUnrolledInputExplicitPaddingConv.h
-    include/VirtuallyUnrolledInputImplicitInPaddingConv.h
+    include/PartiallyUnrolledInputImplicitInPaddingConv.h
     include/Tensor.h
     include/TestHelpers.h
     include/UnrolledInputConv_cI.h
@@ -20,6 +18,8 @@ set(include
     include/UnrolledInputExplicitPaddingConv.h
     include/UnrolledInputImplicitInPaddingConv.h
     include/UnrolledOutputConv.h
+    include/VirtuallyUnrolledInputExplicitOutPaddingConv.h
+    include/VirtuallyUnrolledInputExplicitPaddingConv.h
 )
 
 set(src

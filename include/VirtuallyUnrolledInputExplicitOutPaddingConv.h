@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //  Project:  convolutional
-//  File:     VirtuallyUnrolledInputExplicitOutPaddingConvolution.h
+//  File:     VirtuallyUnrolledInputExplicitOutPaddingConv.h
 //  Authors:  Ofer Dekel
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31,7 +31,7 @@
 // yRows: number of rows in the output tensor Y
 // yCols: number of columns in the output tensor Y
 template <typename ElementType>
-void Convolution(ConvProperties<ExplicitOutputPadding, OddField, VirtuallyUnrolledInput, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride>, 
+void Convolution(ConvProperties<ExplicitOutputPadding, OddField, RowMajorFilters, RowMajorInput, RowMajorOutput, UnitHorizontalStride, UnitVerticalStride, VirtuallyUnrolledInput>, 
     const ElementType* W, 
     const ElementType* X, 
     ElementType* Y, 
